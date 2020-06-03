@@ -1,0 +1,121 @@
+<?xml version="1.0"?>
+<robot name="macroed" xmlns:xacro="http://ros.org/wiki/xacro">
+
+<!-- Material colors definition -->
+  <material name="white">
+    <color rgba="1 1 1 1"/>
+  </material>
+  <material name="black">
+    <color rgba="0 0 0 1"/>
+  </material>
+
+<!-- Properties definitions -->
+  <xacro:property name="rear_wheel_radius" value="0.15" />
+  <xacro:property name="front_wheel_radius" value="0.10" />
+  <xacro:property name="base_z" value="0" />
+  <!-- <xacro:property name="base_z" value="0.32" /> -->
+  
+
+<!-- Defining the robot base -->
+  <link name="base_link">
+    <visual>
+      <origin rpy="0 0 0" xyz="0 0 ${base_z}"/>
+      <geometry>
+        <box size="1 0.7 0.2"/>
+      </geometry>
+      <material name="white"/>
+    </visual>
+    <collision>
+      <geometry>
+        <box size="1 0.7 0.2"/>
+      </geometry>
+    </collision>
+    <inertial>
+      <mass value="10"/>
+      <inertia ixx="1.0" ixy="0.0" ixz="0.0" iyy="1.0" iyz="0.0" izz="1.0"/>
+    </inertial>    
+  </link>
+<!-- Defining the robot rear wheels -->
+  <xacro:macro name="rear_wheel" params="prefix suffix reflect">
+
+    <link name="${prefix}_${suffix}_wheel">
+      <visual>
+        <origin xyz="0 0 ${base_z}" rpy="${pi/2} 0 0" />
+        <geometry>
+          <cylinder radius="${rear_wheel_radius}" length="0.1"/>
+        </geometry>
+        <material name="black"/>
+      </visual>
+      <collision>
+        <geometry>
+          <cylinder radius="${rear_wheel_radius}" length="0.1"/>
+        </geometry>
+        <origin xyz="0 0 ${base_z}" rpy="${pi/2} 0 0" />
+      </collision>
+      <inertial>
+        <mass value="10"/>
+        <inertia ixx="1.0" ixy="0.0" ixz="0.0" iyy="1.0" iyz="0.0" izz="1.0"/>
+      </inertial>
+      <!-- <xacro:default_inertial mass="1"/> -->
+    </link>
+    <joint name="${prefix}_${suffix}_wheel_joint" type="continuous">
+      <axis xyz="0 1 0" rpy="0 0 0" />
+      <parent link="base_link"/>
+      <child link="${prefix}_${suffix}_wheel"/>
+      <origin xyz="${-0.35} ${reflect*0.4} ${-0.17}"/>
+      <!-- <origin xyz="${baselen*reflect/3} 0 -${wheeldiam/2+.05}" rpy="0 0 0"/> -->
+    </joint>
+
+  </xacro:macro>
+
+<!-- Defining the robot front wheels -->
+
+  <xacro:macro name="front_wheel" params="prefix suffix reflect">
+
+    <link name="${prefix}_${suffix}_wheel">
+      <visual>
+        <origin xyz="0 0 ${base_z}" rpy="${pi/2} 0 0" />
+        <geometry>
+          <cylinder radius="${front_wheel_radius}" length="0.1"/>
+        </geometry>
+        <material name="black"/>
+      </visual>
+      <collision>
+        <geometry>
+          <cylinder radius="${front_wheel_radius}" length="0.1"/>
+        </geometry>
+        <origin xyz="0 0 ${base_z}" rpy="${pi/2} 0 0" />
+      </collision>
+      <inertial>
+        <mass value="10"/>
+        <inertia ixx="1.0" ixy="0.0" ixz="0.0" iyy="1.0" iyz="0.0" izz="1.0"/>
+      </inertial>
+      <!-- <xacro:default_inertial mass="1"/> -->
+    </link>
+    <joint name="${prefix}_${suffix}_wheel_joint" type="continuous">
+      <axis xyz="0 1 0" rpy="0 0 0" />
+      <parent link="base_link"/>
+      <child link="${prefix}_${suffix}_wheel"/>
+      <origin xyz="${0.35} ${reflect*0.35} ${-0.22}"/>
+      <!-- <origin xyz="${baselen*reflect/3} 0 -${wheeldiam/2+.05}" rpy="0 0 0"/> -->
+    </joint>
+
+  </xacro:macro>
+
+  <!-- Setting the rear right wheel -->
+  <xacro:rear_wheel prefix="right" suffix="rear" reflect="-1" />
+  <!-- Setting the rear left wheel -->
+  <xacro:rear_wheel prefix="left" suffix="rear" reflect="1" />
+  <!-- Setting the front right wheel -->
+  <xacro:front_wheel prefix="right" suffix="front" reflect="-1" />
+  <!-- Setting the front left wheel -->
+  <xacro:front_wheel prefix="left" suffix="front" reflect="1" />
+
+<!-- Gazebo plugin for ROS Control -->
+  <gazebo>
+    <plugin name="gazebo_ros_control" filename="libgazebo_ros_control.so">
+      <robotNamespace>/</robotNamespace>
+    </plugin>
+  </gazebo>
+
+</robot>
