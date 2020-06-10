@@ -201,32 +201,34 @@
         <alwaysOn>true</alwaysOn>
         <updateRate>10</updateRate>
         <cameraName>camera1</cameraName>
-        <imageTopicName>depth/image_raw</imageTopicName>
-        <cameraInfoTopicName>depth/camera_info</cameraInfoTopicName>
-        <depthImageTopicName>depth/image_raw</depthImageTopicName>
-        <depthImageCameraInfoTopicName>depth/camera_info</depthImageCameraInfoTopicName>
-        <pointCloudTopicName>depth/points</pointCloudTopicName>
+        <imageTopicName>/camera/color/image_raw</imageTopicName>
+        <cameraInfoTopicName>/camera/color/camera_info</cameraInfoTopicName>
+        <depthImageTopicName>/camera/depth/image_raw</depthImageTopicName>
+        <depthImageCameraInfoTopicName>/camera/depth/camera_info</depthImageCameraInfoTopicName>
+        <pointCloudTopicName>/camera/depth/points</pointCloudTopicName>
         <frameName>camera_depth_optical_frame</frameName>
-        <pointCloudCutoff>0.3</pointCloudCutoff>
+        <pointCloudCutoff>0.5</pointCloudCutoff>
+        <pointCloudCutoffMax>3.0</pointCloudCutoffMax>
         <distortion_k1>0.0</distortion_k1>
         <distortion_k2>0.0</distortion_k2>
         <distortion_k3>0.0</distortion_k3>
         <distortion_t1>0.0</distortion_t1>
         <distortion_t2>0.0</distortion_t2>
-        <!--
-        <CxPrime>0</CxPrime>
+        
+        <!-- <CxPrime>0</CxPrime>
         <Cx>0</Cx>
         <Cy>0</Cy>
         <focalLength>0</focalLength>
-        <hackBaseline>0</hackBaseline>
-        -->
+        <hackBaseline>0</hackBaseline> -->
+       
       </plugin>
     </sensor>
   </gazebo>
 
   <!-- Parameterised in part by the values in kinect_properties.urdf.xacro -->
   <joint name="camera_rgb_joint" type="fixed">
-    <origin rpy="0 0 0" xyz="-0.30 0.2 0.95"/>
+    <!-- <origin rpy="0 0 0" xyz="-0.30 0.2 0.95"/> -->
+    <origin rpy="0 0 0" xyz="0.50 0.2 0.15"/>
     <parent link="base_link"/>
     <child link="camera_rgb_frame"/>
   </joint>
@@ -237,6 +239,7 @@
       <inertia ixx="0.0001" ixy="0.0" ixz="0.0" iyy="0.0001" iyz="0.0" izz="0.0001"/>
     </inertial>
   </link>
+  
   <joint name="camera_rgb_optical_joint" type="fixed">
     <origin rpy="-1.57079632679 0 -1.57079632679" xyz="0 0 0"/>
     <parent link="camera_rgb_frame"/>
@@ -256,7 +259,7 @@
   </joint>
   <link name="camera_link">
     <visual>
-      <origin rpy="0 0 1.57079632679" xyz="0 0 0"/>
+      <origin rpy="0.0 0 1.57079632679" xyz="0 0 0"/>
       <geometry>
         <mesh filename="package://robot_cognition_system/sim_model/meshes/kinect.dae"/>
       </geometry>
