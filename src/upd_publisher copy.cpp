@@ -232,122 +232,122 @@ void process_upd(const PointCloud::ConstPtr& msg)
           viewer.showCloud (msg2);
     }
 
-    // // 1. Reducing the points
-    // pcl::PointXYZRGBA point;
-    // int counter = 0;
-    // pcl::PointCloud<pcl::PointXYZRGBA>::iterator it;
-    // PointCloud::Ptr newMsg (new PointCloud);
+    // 1. Reducing the points
+    pcl::PointXYZRGBA point;
+    int counter = 0;
+    pcl::PointCloud<pcl::PointXYZRGBA>::iterator it;
+    PointCloud::Ptr newMsg (new PointCloud);
 
-    // for( it= msg2->begin(); it!= msg2->end(); it++){
-    // if(counter%std::stoi(getenv("UPD_REDUCTION_PERCENT"))==0)
-    //     point.x = it->x;
-    //     point.y = it->y;
-    //     point.z = it->z;
-    //     point.r = it->r;
-    //     point.g = it->g;
-    //     point.b = it->b;
-    //     point.a = it->a;
-    //     newMsg->push_back(point);
-    //     counter ++;   
+    for( it= msg2->begin(); it!= msg2->end(); it++){
+    if(counter%std::stoi(getenv("UPD_REDUCTION_PERCENT"))==0)
+        point.x = it->x;
+        point.y = it->y;
+        point.z = it->z;
+        point.r = it->r;
+        point.g = it->g;
+        point.b = it->b;
+        point.a = it->a;
+        newMsg->push_back(point);
+        counter ++;   
+    }
+
+    // 2. New UPD object
+    upd *m_upd;
+    m_upd = new upd;
+
+    // 3. Apply filters
+    bool showStatistics = false;
+
+    // for a full list of profiles see: /io/include/pcl/compression/compression_profiles.h
+    pcl::io::compression_Profiles_e compressionProfile = pcl::io::MED_RES_ONLINE_COMPRESSION_WITH_COLOR;
+
+    // instantiate point cloud compression for encoding and decoding
+    PointCloudEncoder = new pcl::io::OctreePointCloudCompression<pcl::PointXYZRGBA> (compressionProfile, showStatistics);
+    PointCloudDecoder = new pcl::io::OctreePointCloudCompression<pcl::PointXYZRGBA> ();    
+    // ****** Remove NAN data *******
+    PointCloud::Ptr outputCloud (new PointCloud);
+    PointCloud::Ptr cloudOut (new PointCloud);
+    std::vector<int> indices;
+    pcl::removeNaNFromPointCloud(*newMsg,*outputCloud, indices);
+
+    // ******* Compress point cloud ********
+    // stringstream to store compressed point cloud
+    std::stringstream compressedData;
+
+    // compress point cloud
+    PointCloudEncoder->encodePointCloud (outputCloud, compressedData);
+
+    // decompress point cloud
+    PointCloudDecoder->decodePointCloud (compressedData, cloudOut);
+
+    // Voxel Grid - points reduction
+    pcl::VoxelGrid<pcl::PointXYZRGBA> sor;
+    sor.setInputCloud (cloudOut);
+    sor.setLeafSize (std::stof(getenv("UPD_VOX_GRID_LEAF_X")), std::stof(getenv("UPD_VOX_GRID_LEAF_Y")), std::stof(getenv("UPD_VOX_GRID_LEAF_Z")));
+    PointCloud::Ptr cloud_filtered (new PointCloud);
+    sor.filter (*cloud_filtered);
+
+    printf("Info: setInpuCloud");
+    m_upd->setInputCloud(cloud_filtered);
+
+    // 3. Set radius
+    m_upd->setSearchRadius(std::stod(getenv("UPD_SEARCH_RADIUS")));
+
+    // 4. Run UPD radius
+    m_upd->runUPD_radius();
+
+    // 5. Get UPD
+    m_upd->getUPD();
+
+    // 6. Get the colored map
+    
+    // 6.1 Prepare the parameters data
+    PointCloud::Ptr m_cloud_color_UPD (new PointCloud);
+
+    double unevenness = std::stod (getenv("UPD_UNEVENNESS"));
+    double unevennessMax = std::stod (getenv("UPD_UNEVENNESS_MAX"));
+    double radAngle = (std::stod(getenv("UPD_RAD_ANGL")) * M_PI / 180);
+    
+    // 6.2 Get colored map
+    m_upd->setColorMapType(false);
+    m_upd->getAsColorMap(m_cloud_color_UPD,
+                           (unevenness)/unevennessMax,
+						   radAngle);
+    //  viewer.setBackgroundColor(0.05, 0.05, 0.05, 0);
+
+    // if (!viewer.wasStopped ()) {
+    //     viewer.removePointCloud();
+    //     pcl::visualization::PointCloudColorHandlerRGBField<PointT> rgb_color(m_cloud_color_UPD);
+    //     viewer.addPointCloud (m_cloud_color_UPD, rgb_color, "cloud");
+    //     viewer.setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 2, "cloud");
+    //     viewer.spin ();
     // }
 
-    // // 2. New UPD object
-    // upd *m_upd;
-    // m_upd = new upd;
-
-    // // 3. Apply filters
-    // bool showStatistics = false;
-
-    // // for a full list of profiles see: /io/include/pcl/compression/compression_profiles.h
-    // pcl::io::compression_Profiles_e compressionProfile = pcl::io::MED_RES_ONLINE_COMPRESSION_WITH_COLOR;
-
-    // // instantiate point cloud compression for encoding and decoding
-    // PointCloudEncoder = new pcl::io::OctreePointCloudCompression<pcl::PointXYZRGBA> (compressionProfile, showStatistics);
-    // PointCloudDecoder = new pcl::io::OctreePointCloudCompression<pcl::PointXYZRGBA> ();    
-    // // ****** Remove NAN data *******
-    // PointCloud::Ptr outputCloud (new PointCloud);
-    // PointCloud::Ptr cloudOut (new PointCloud);
-    // std::vector<int> indices;
-    // pcl::removeNaNFromPointCloud(*newMsg,*outputCloud, indices);
-
-    // // ******* Compress point cloud ********
-    // // stringstream to store compressed point cloud
-    // std::stringstream compressedData;
-
-    // // compress point cloud
-    // PointCloudEncoder->encodePointCloud (outputCloud, compressedData);
-
-    // // decompress point cloud
-    // PointCloudDecoder->decodePointCloud (compressedData, cloudOut);
-
-    // // Voxel Grid - points reduction
-    // pcl::VoxelGrid<pcl::PointXYZRGBA> sor;
-    // sor.setInputCloud (cloudOut);
-    // sor.setLeafSize (std::stof(getenv("UPD_VOX_GRID_LEAF_X")), std::stof(getenv("UPD_VOX_GRID_LEAF_Y")), std::stof(getenv("UPD_VOX_GRID_LEAF_Z")));
-    // PointCloud::Ptr cloud_filtered (new PointCloud);
-    // sor.filter (*cloud_filtered);
-
-    // printf("Info: setInpuCloud");
-    // m_upd->setInputCloud(cloud_filtered);
-
-    // // 3. Set radius
-    // m_upd->setSearchRadius(std::stod(getenv("UPD_SEARCH_RADIUS")));
-
-    // // 4. Run UPD radius
-    // m_upd->runUPD_radius();
-
-    // // 5. Get UPD
-    // m_upd->getUPD();
-
-    // // 6. Get the colored map
+    if (!viewer2.wasStopped()){
+          viewer2.showCloud (m_cloud_color_UPD);
+    }
     
-    // // 6.1 Prepare the parameters data
-    // PointCloud::Ptr m_cloud_color_UPD (new PointCloud);
+    // 7. Publish the UPD classified point clouds
+    ros::NodeHandle nh;
+    ros::Publisher pub = nh.advertise<PointCloud> ("upd_point_cloud_classification", 1);
+    pub.publish (m_cloud_color_UPD);
 
-    // double unevenness = std::stod (getenv("UPD_UNEVENNESS"));
-    // double unevennessMax = std::stod (getenv("UPD_UNEVENNESS_MAX"));
-    // double radAngle = (std::stod(getenv("UPD_RAD_ANGL")) * M_PI / 180);
+    sensor_msgs::PointCloud2 msgcloud;
+    pcl::toROSMsg(*m_cloud_color_UPD.get(), msgcloud); 
+
+    ros::NodeHandle nh2;
+    std::string tf_frame;
+    tf_frame = "/base_link";
+    nh2.param("frame_id", tf_frame, std::string("/base_link"));
+    msgcloud.header.frame_id = tf_frame;
+    msgcloud.header.stamp = ros::Time::now();
+    ros::Publisher pub2 = nh2.advertise<sensor_msgs::PointCloud2> ("upd_point_cloud_classification_rviz", 1);
+    printf("Info: 4. UPD published msgCloud \n");
+    pub2.publish (msgcloud);
     
-    // // 6.2 Get colored map
-    // m_upd->setColorMapType(false);
-    // m_upd->getAsColorMap(m_cloud_color_UPD,
-    //                        (unevenness)/unevennessMax,
-	// 					   radAngle);
-    // //  viewer.setBackgroundColor(0.05, 0.05, 0.05, 0);
-
-    // // if (!viewer.wasStopped ()) {
-    // //     viewer.removePointCloud();
-    // //     pcl::visualization::PointCloudColorHandlerRGBField<PointT> rgb_color(m_cloud_color_UPD);
-    // //     viewer.addPointCloud (m_cloud_color_UPD, rgb_color, "cloud");
-    // //     viewer.setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 2, "cloud");
-    // //     viewer.spin ();
-    // // }
-
-    // if (!viewer2.wasStopped()){
-    //       viewer2.showCloud (m_cloud_color_UPD);
-    // }
-    
-    // // 7. Publish the UPD classified point clouds
-    // ros::NodeHandle nh;
-    // ros::Publisher pub = nh.advertise<PointCloud> ("upd_point_cloud_classification", 1);
-    // pub.publish (m_cloud_color_UPD);
-
-    // sensor_msgs::PointCloud2 msgcloud;
-    // pcl::toROSMsg(*m_cloud_color_UPD.get(), msgcloud); 
-
-    // ros::NodeHandle nh2;
-    // std::string tf_frame;
-    // tf_frame = "/base_link";
-    // nh2.param("frame_id", tf_frame, std::string("/base_link"));
-    // msgcloud.header.frame_id = tf_frame;
-    // msgcloud.header.stamp = ros::Time::now();
-    // ros::Publisher pub2 = nh2.advertise<sensor_msgs::PointCloud2> ("upd_point_cloud_classification_rviz", 1);
-    // printf("Info: 4. UPD published msgCloud \n");
-    // pub2.publish (msgcloud);
-    
-    // ros::Rate loop_rate(4);
-    // loop_rate.sleep();
-    // ros::spinOnce();
+    ros::Rate loop_rate(4);
+    loop_rate.sleep();
+    ros::spinOnce();
 
 }
 
