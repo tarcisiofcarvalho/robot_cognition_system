@@ -2,6 +2,7 @@
 #include <pcl_ros/point_cloud.h>
 #include <pcl/point_types.h>
 #include <pcl/common/io.h>
+#include <pcl/common/transforms.h>
 #include <pcl/io/pcd_io.h>
 #include <pcl/filters/filter.h>
 #include <pcl/point_cloud.h>
@@ -19,6 +20,7 @@
 using namespace std;
 
 #define _USE_MATH_DEFINES
+#define PI 3.14159265
 
 // PCL Cloud type definition
 typedef pcl::PointCloud<pcl::PointXYZRGBA> PointCloud;
@@ -211,17 +213,157 @@ pcl::PointCloud<pcl::PointXYZRGBA>::Ptr getAsColorMap(double _traversability_ind
 
 }
 
+PointCloud::Ptr upd_result;
+
+PointCloud::Ptr upd_result2;
+
+void process_laser(const PointCloud::ConstPtr& msg){
+    // printf ("Cloud: width = %d, height = %d, sensor_origin = %d\n", msg->width, msg->height, msg->sensor_origin_);
+    // printf("**** Laser sensor orientation **** ");
+    // Eigen::Quaternionf myQuaternion = msg->sensor_orientation_; //The Quaternion to print
+
+    // std::cout << "Debug: " << "sensor_orientation_.w() = " << myQuaternion.w() << std::endl; //Print out the scalar
+    // std::cout << "Debug: " << "sensor_orientation_.vec() = " << myQuaternion.vec() << std::endl; //Print out the orientation vector
+    
+    // Eigen::Quaternionf myQuaternion2 = msg->sensor_orientation_; //The Quaternion to print
+
+    // std::cout << "Debug: " << "sensor_origin_.w() = " << myQuaternion2.w() << std::endl; //Print out the scalar
+    // std::cout << "Debug: " << "sensor_origin_.vec() = " << myQuaternion2.vec() << std::endl; //Print out the orientation vector
+
+    // BOOST_FOREACH (const pcl::PointXYZRGBA& pt, msg->points)
+    // printf ("\t(%f, %f, %f)\n", pt.x, pt.y, pt.z);
+    // upd_result->sensor_orientation_ = Eigen::Quaternionf (0, -1, 0, 0);
+
+    // Rotation
+    Eigen::Matrix4f eRot;
+    Eigen::Quaternionf PCRot;
+    Eigen::Vector3f PCTrans;
+    Eigen::Matrix<float, 4, 4> rotMatrix;
+
+    // Counterclockwise rotation around y axis
+    rotMatrix(0,0) = cos(-PI);
+    rotMatrix(0,1) = 0;
+    rotMatrix(0,2) = sin(-PI);
+    rotMatrix(0,3) = 0;
+
+    rotMatrix(1,0) = 0;
+    rotMatrix(1,1) = 1;
+    rotMatrix(1,2) = 0;
+    rotMatrix(1,3) = 0;
+
+    rotMatrix(2,0) = -sin(-PI);
+    rotMatrix(2,1) = 0;
+    rotMatrix(2,2) = cos(-PI);
+    rotMatrix(2,3) = 0;    
+
+    rotMatrix(3,0) = 0;
+    rotMatrix(3,1) = 0;
+    rotMatrix(3,2) = 0;
+    rotMatrix(3,3) = 1;
+
+    
+    // pcl::transformPointCloud(*upd_result, *upd_result2, rotMatrix);
+    // upd_result2 = upd_result;
+    
+    pcl::PointXYZRGBA point;
+    pcl::PointCloud<pcl::PointXYZRGBA>::iterator it;
+    PointCloud::Ptr msg2 = boost::const_pointer_cast<PointCloud>(msg);
+    for( it= msg2->begin(); it!= msg2->end(); it++){
+        point.x = it->z;
+        point.y = it->y;
+        point.z = -it->x;
+        point.r = 0;
+        point.g = 0;
+        point.b = 254;
+        point.a = 255;
+        upd_result->push_back(point);
+    }
+
+    if (!viewer2.wasStopped()){
+          viewer2.showCloud (upd_result);
+    }
+}
+
+
+
+
+
 /* This function receives the OpenNI data from a kinect device, 
     filter and classify the point cloud data with UPD classifier, 
     and publish the UPD classified data */
 void process_upd(const PointCloud::ConstPtr& msg)
 {
     // printf ("Cloud: width = %d, height = %d\n", msg->width, msg->height);
+    // printf("**** Kinect sensor orientation **** ");
+    // Eigen::Quaternionf myQuaternion = msg->sensor_orientation_; //The Quaternion to print
+
+    // std::cout << "Debug: " << "sensor_orientation_.w() = " << myQuaternion.w() << std::endl; //Print out the scalar
+    // std::cout << "Debug: " << "sensor_orientation_.vec() = " << myQuaternion.vec() << std::endl; //Print out the orientation vector
+    
+    // Eigen::Quaternionf myQuaternion2 = msg->sensor_orientation_; //The Quaternion to print
+
+    // std::cout << "Debug: " << "sensor_origin_.w() = " << myQuaternion2.w() << std::endl; //Print out the scalar
+    // std::cout << "Debug: " << "sensor_origin_.vec() = " << myQuaternion2.vec() << std::endl; //Print out the orientation vector
+      
     // BOOST_FOREACH (const pcl::PointXYZRGBA& pt, msg->points)
     // printf ("\t(%f, %f, %f)\n", pt.x, pt.y, pt.z);
 
     // 1. Converting from const to non const boost
     PointCloud::Ptr msg2 = boost::const_pointer_cast<PointCloud>(msg);
+
+        // Rotation
+    Eigen::Matrix4f eRot;
+    Eigen::Quaternionf PCRot;
+    Eigen::Vector3f PCTrans;
+    Eigen::Matrix<float, 4, 4> rotMatrix;
+
+    // Counterclockwise rotation around y axis
+    rotMatrix(0,0) = cos(-PI);
+    rotMatrix(0,1) = 0;
+    rotMatrix(0,2) = sin(-PI);
+    rotMatrix(0,3) = 0;
+
+    rotMatrix(1,0) = 0;
+    rotMatrix(1,1) = 1;
+    rotMatrix(1,2) = 0;
+    rotMatrix(1,3) = 0;
+
+    rotMatrix(2,0) = -sin(-PI);
+    rotMatrix(2,1) = 0;
+    rotMatrix(2,2) = cos(-PI);
+    rotMatrix(2,3) = 0;    
+
+    rotMatrix(3,0) = 0;
+    rotMatrix(3,1) = 0;
+    rotMatrix(3,2) = 0;
+    rotMatrix(3,3) = 1;
+
+    
+    pcl::transformPointCloud(*msg2, *msg2, rotMatrix);
+
+    // Clockwise rotation around z axis
+    rotMatrix(0,0) = cos(-PI);
+    rotMatrix(0,1) = -sin(-PI);
+    rotMatrix(0,2) = 0;
+    rotMatrix(0,3) = 0;
+
+    rotMatrix(1,0) = sin(-PI);
+    rotMatrix(1,1) = cos(-PI);
+    rotMatrix(1,2) = 0;
+    rotMatrix(1,3) = 0;
+
+    rotMatrix(2,0) = 0;
+    rotMatrix(2,1) = 0;
+    rotMatrix(2,2) = 1;
+    rotMatrix(2,3) = 0;    
+
+    rotMatrix(3,0) = 0;
+    rotMatrix(3,1) = 0;
+    rotMatrix(3,2) = 0;
+    rotMatrix(3,3) = 1;
+
+    
+    pcl::transformPointCloud(*msg2, *msg2, rotMatrix);
 
     // if (!viewer2.wasStopped()){
     //       viewer2.showCloud (msg2);
@@ -322,10 +464,16 @@ void process_upd(const PointCloud::ConstPtr& msg)
     //     viewer.setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 2, "cloud");
     //     viewer.spin ();
     // }
+    upd_result = m_cloud_color_UPD;
 
-    if (!viewer2.wasStopped()){
-          viewer2.showCloud (m_cloud_color_UPD);
-    }
+    // 8. Processing laser
+    ros::NodeHandle nhk;
+    ros::Subscriber sub = nhk.subscribe<PointCloud>("/laser/point_cloud", 1, process_laser);
+    ros::spinOnce();
+
+    // if (!viewer2.wasStopped()){
+    //       viewer2.showCloud (m_cloud_color_UPD);
+    // }
     
     // 7. Publish the UPD classified point clouds
     ros::NodeHandle nh;
@@ -346,7 +494,7 @@ void process_upd(const PointCloud::ConstPtr& msg)
     printf("Info: 4. UPD published msgCloud \n");
     pub2.publish (msgcloud);
     
-    ros::Rate loop_rate(10);
+    ros::Rate loop_rate(50);
     loop_rate.sleep();
     ros::spinOnce();
 

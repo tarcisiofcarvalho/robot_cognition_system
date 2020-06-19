@@ -13,5 +13,8 @@ export UPD_VOX_GRID_LEAF_Y="0.05"
 export UPD_VOX_GRID_LEAF_Z="0.05"
 export UPD_REDUCTION_PERCENT="25"
 
-# Staring the upd publisher
+# Starting the upd publisher
 ../../devel/lib/robot_cognition_system/upd_publisher
+
+# Starting the laser pointer publisher
+# python src/laser_publisher.py
