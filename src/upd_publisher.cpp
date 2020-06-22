@@ -235,39 +235,44 @@ void process_laser(const PointCloud::ConstPtr& msg){
     // upd_result->sensor_orientation_ = Eigen::Quaternionf (0, -1, 0, 0);
 
     // Rotation
-    Eigen::Matrix4f eRot;
-    Eigen::Quaternionf PCRot;
-    Eigen::Vector3f PCTrans;
-    Eigen::Matrix<float, 4, 4> rotMatrix;
+    // Eigen::Matrix4f eRot;
+    // Eigen::Quaternionf PCRot;
+    // Eigen::Vector3f PCTrans;
 
-    // Counterclockwise rotation around y axis
-    rotMatrix(0,0) = cos(-PI);
-    rotMatrix(0,1) = 0;
-    rotMatrix(0,2) = sin(-PI);
-    rotMatrix(0,3) = 0;
+    // 1. Casting the laser point cloud object
+    PointCloud::Ptr msg2 = boost::const_pointer_cast<PointCloud>(msg);
 
-    rotMatrix(1,0) = 0;
-    rotMatrix(1,1) = 1;
-    rotMatrix(1,2) = 0;
-    rotMatrix(1,3) = 0;
+    // 2. Translation matrix definition for laser 
+    // point frame to kinect frame
+    Eigen::Matrix<float, 4, 4> translationMatrix;
 
-    rotMatrix(2,0) = -sin(-PI);
-    rotMatrix(2,1) = 0;
-    rotMatrix(2,2) = cos(-PI);
-    rotMatrix(2,3) = 0;    
+    translationMatrix(0,0) = 1;
+    translationMatrix(0,1) = 0;
+    translationMatrix(0,2) = 0;
+    translationMatrix(0,3) = std::stof (getenv("LASER_TO_KINECT_X"));
 
-    rotMatrix(3,0) = 0;
-    rotMatrix(3,1) = 0;
-    rotMatrix(3,2) = 0;
-    rotMatrix(3,3) = 1;
+    translationMatrix(1,0) = 0;
+    translationMatrix(1,1) = 1;
+    translationMatrix(1,2) = 0;
+    translationMatrix(1,3) = std::stof (getenv("LASER_TO_KINECT_Y"));;
 
-    
-    // pcl::transformPointCloud(*upd_result, *upd_result2, rotMatrix);
-    // upd_result2 = upd_result;
-    
+    translationMatrix(2,0) = 0;
+    translationMatrix(2,1) = 0;
+    translationMatrix(2,2) = 1;
+    translationMatrix(2,3) = std::stof (getenv("LASER_TO_KINECT_Z"));;    
+
+    translationMatrix(3,0) = 0;
+    translationMatrix(3,1) = 0;
+    translationMatrix(3,2) = 0;
+    translationMatrix(3,3) = 1;
+   
+    // 3. Translation the laser points
+    pcl::transformPointCloud(*msg2, *msg2, translationMatrix);
+
+    // 4. Include laser data into kinect UPD processed data
     pcl::PointXYZRGBA point;
     pcl::PointCloud<pcl::PointXYZRGBA>::iterator it;
-    PointCloud::Ptr msg2 = boost::const_pointer_cast<PointCloud>(msg);
+    upd_result2 = upd_result;
     for( it= msg2->begin(); it!= msg2->end(); it++){
         point.x = it->z;
         point.y = it->y;
@@ -276,16 +281,16 @@ void process_laser(const PointCloud::ConstPtr& msg){
         point.g = 0;
         point.b = 254;
         point.a = 255;
-        upd_result->push_back(point);
+        upd_result2->push_back(point);
     }
 
     if (!viewer2.wasStopped()){
-          viewer2.showCloud (upd_result);
+          viewer2.showCloud (upd_result2);
     }
+
+    // // 5. Reseting the data
+    // upd_result.reset(new pcl::PointCloud<pcl::PointXYZRGBA>);
 }
-
-
-
 
 
 /* This function receives the OpenNI data from a kinect device, 
@@ -469,6 +474,8 @@ void process_upd(const PointCloud::ConstPtr& msg)
     // 8. Processing laser
     ros::NodeHandle nhk;
     ros::Subscriber sub = nhk.subscribe<PointCloud>("/laser/point_cloud", 1, process_laser);
+    ros::Rate loop_rate(50);
+    loop_rate.sleep();
     ros::spinOnce();
 
     // if (!viewer2.wasStopped()){
@@ -493,9 +500,7 @@ void process_upd(const PointCloud::ConstPtr& msg)
     ros::Publisher pub2 = nh2.advertise<sensor_msgs::PointCloud2> ("upd_point_cloud_classification_rviz", 1);
     printf("Info: 4. UPD published msgCloud \n");
     pub2.publish (msgcloud);
-    
-    ros::Rate loop_rate(50);
-    loop_rate.sleep();
+
     ros::spinOnce();
 
 }
@@ -513,6 +518,9 @@ int main(int argc, char** argv){
     printf("UPD_VOX_GRID_LEAF_Y = %s \n", getenv("UPD_VOX_GRID_LEAF_Y"));
     printf("UPD_VOX_GRID_LEAF_Z = %s \n", getenv("UPD_VOX_GRID_LEAF_Z"));
     printf("UPD_REDUCTION_PERCENT = %s \n", getenv("UPD_REDUCTION_PERCENT"));
+    printf("LASER_TO_KINECT_X = %s \n", getenv("LASER_TO_KINECT_X"));
+    printf("LASER_TO_KINECT_Y = %s \n", getenv("LASER_TO_KINECT_Y"));
+    printf("LASER_TO_KINECT_Z = %s \n", getenv("LASER_TO_KINECT_Z"));
     printf("=================================================== \n");
 
     // 1. ROS Init
@@ -526,7 +534,8 @@ int main(int argc, char** argv){
     // 3. Publishing UPD data 
     printf("Info: 3. Publishing UPD data \n");
     ros::Subscriber sub = nhk.subscribe<PointCloud>("/camera/depth/points", 1, process_upd);
-
+    ros::Rate loop_rate(50);
+    loop_rate.sleep();
     ros::spin();
 }
 
