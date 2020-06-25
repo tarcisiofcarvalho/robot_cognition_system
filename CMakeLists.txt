@@ -175,7 +175,7 @@ FILE(GLOB LIB_HEADERS "${robot_cognition_system_SOURCE_DIR}/include/*.h")
 ## With catkin_make all packages are built within a single CMake context
 ## The recommended prefix ensures that target names across packages don't collide
 add_executable(upd_publisher src/upd_publisher.cpp include/export.h include/upd.h)
-add_executable(upd_subscriber src/upd_subscriber.cpp)
+add_executable(passage_classifier_publisher src/passage_classifier_publisher.cpp)
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
@@ -186,7 +186,7 @@ add_executable(upd_subscriber src/upd_subscriber.cpp)
 ## Add cmake target dependencies of the executable
 ## same as for the library above
 add_dependencies(upd_publisher ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-add_dependencies(upd_subscriber ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+add_dependencies(passage_classifier_publisher ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Specify libraries to link a library or executable target against
 target_link_libraries(upd_publisher 
@@ -197,7 +197,7 @@ target_link_libraries(upd_publisher
   "/home/tarcisio/NetBeansProjects/catkin_ws/src/robot_cognition_system/src/upd_lib/build/libupd_lib.so"
 )
 
-target_link_libraries(upd_subscriber 
+target_link_libraries(passage_classifier_publisher 
   # Qt4::QtGui 
   # QVTK
   # ${PCL_LIBRARIES} 

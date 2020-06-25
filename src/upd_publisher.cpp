@@ -33,7 +33,7 @@ typedef pcl::PointXYZRGBA PointT;
 pcl::io::OctreePointCloudCompression<pcl::PointXYZRGBA>* PointCloudEncoder;
 pcl::io::OctreePointCloudCompression<pcl::PointXYZRGBA>* PointCloudDecoder;
 // pcl::visualization::CloudViewer viewer ("Show UPD");
-pcl::visualization::CloudViewer viewer2 ("Show Points");
+// pcl::visualization::CloudViewer viewer2 ("Show Points");
 // boost::shared_ptr<pcl::visualization::PCLVisualizer> viewer2;
 // pcl::visualization::CloudViewer viewerUPD ("Show UPD");
 
@@ -284,9 +284,9 @@ void process_laser(const PointCloud::ConstPtr& msg){
         upd_result2->push_back(point);
     }
 
-    if (!viewer2.wasStopped()){
-          viewer2.showCloud (upd_result2);
-    }
+    // if (!viewer2.wasStopped()){
+    //       viewer2.showCloud (upd_result2);
+    // }
 
     // // 5. Reseting the data
     // upd_result.reset(new pcl::PointCloud<pcl::PointXYZRGBA>);
@@ -436,7 +436,7 @@ void process_upd(const PointCloud::ConstPtr& msg)
 
     m_upd->setInputCloud(cloud_filtered);
 
-    printf("Info: setInpuCloud");
+    // printf("Info: setInpuCloud");
     // 3. Set radius
     m_upd->setSearchRadius(std::stod(getenv("UPD_SEARCH_RADIUS")));
 
@@ -472,11 +472,11 @@ void process_upd(const PointCloud::ConstPtr& msg)
     upd_result = m_cloud_color_UPD;
 
     // 8. Processing laser
-    ros::NodeHandle nhk;
-    ros::Subscriber sub = nhk.subscribe<PointCloud>("/laser/point_cloud", 1, process_laser);
-    ros::Rate loop_rate(50);
-    loop_rate.sleep();
-    ros::spinOnce();
+    // ros::NodeHandle nhk;
+    // ros::Subscriber sub = nhk.subscribe<PointCloud>("/laser/point_cloud", 1, process_laser);
+    // ros::Rate loop_rate(50);
+    // loop_rate.sleep();
+    // ros::spinOnce();
 
     // if (!viewer2.wasStopped()){
     //       viewer2.showCloud (m_cloud_color_UPD);
@@ -485,7 +485,7 @@ void process_upd(const PointCloud::ConstPtr& msg)
     // 7. Publish the UPD classified point clouds
     ros::NodeHandle nh;
     ros::Publisher pub = nh.advertise<PointCloud> ("upd_point_cloud_classification", 1);
-    printf("Info: 4. UPD published pointCloud \n");
+    // printf("Info: 4. UPD published pointCloud \n");
     pub.publish (m_cloud_color_UPD);
 
     sensor_msgs::PointCloud2 msgcloud;
@@ -498,7 +498,7 @@ void process_upd(const PointCloud::ConstPtr& msg)
     msgcloud.header.frame_id = tf_frame;
     msgcloud.header.stamp = ros::Time::now();
     ros::Publisher pub2 = nh2.advertise<sensor_msgs::PointCloud2> ("upd_point_cloud_classification_rviz", 1);
-    printf("Info: 4. UPD published msgCloud \n");
+    // printf("Info: 4. UPD published msgCloud \n");
     pub2.publish (msgcloud);
 
     ros::spinOnce();
@@ -518,9 +518,6 @@ int main(int argc, char** argv){
     printf("UPD_VOX_GRID_LEAF_Y = %s \n", getenv("UPD_VOX_GRID_LEAF_Y"));
     printf("UPD_VOX_GRID_LEAF_Z = %s \n", getenv("UPD_VOX_GRID_LEAF_Z"));
     printf("UPD_REDUCTION_PERCENT = %s \n", getenv("UPD_REDUCTION_PERCENT"));
-    printf("LASER_TO_KINECT_X = %s \n", getenv("LASER_TO_KINECT_X"));
-    printf("LASER_TO_KINECT_Y = %s \n", getenv("LASER_TO_KINECT_Y"));
-    printf("LASER_TO_KINECT_Z = %s \n", getenv("LASER_TO_KINECT_Z"));
     printf("=================================================== \n");
 
     // 1. ROS Init
