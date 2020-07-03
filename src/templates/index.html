@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <title>Robot Cognition System Interface</title>
+        <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    </head>
+    <body>
+        <div id="app" style="margin: 1px; display:inline-block; width: 100%; ">
+            <div style="border: 1px; background-color: red; max-width: 200px; max-height: 200px; padding: 40px;" v-if="passage_condition=='unsafe'">
+                Unsafe Passage Condition {{ passage_condition }}
+                
+            </div>
+            <div style="border: 1px; background-color:green; max-width: 200px; max-height: 200px; padding: 40px" v-else>
+                Safe Passage Condition {{ passage_condition }}
+            </div>  
+        </div>      
+    </body>
+    <script src="/static/index.js"></script>
+</html>

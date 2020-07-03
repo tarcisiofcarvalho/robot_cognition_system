@@ -508,7 +508,7 @@ void process_upd(const PointCloud::ConstPtr& msg)
 int main(int argc, char** argv){
     
     // 0. Printing the parameters
-    printf("===================================================");
+    printf("=================================================== \n");
     printf("Info: Setup parameters \n");
     printf("POINT_CLOUD_API = %s \n", getenv("POINT_CLOUD_API"));
     printf("UPD_UNEVENNESS = %s \n", getenv("UPD_UNEVENNESS"));
@@ -531,7 +531,7 @@ int main(int argc, char** argv){
     // 3. Publishing UPD data 
     printf("Info: 3. Publishing UPD data \n");
     ros::Subscriber sub = nhk.subscribe<PointCloud>("/camera/depth/points", 1, process_upd);
-    ros::Rate loop_rate(50);
+    ros::Rate loop_rate(1000);
     loop_rate.sleep();
     ros::spin();
 }
