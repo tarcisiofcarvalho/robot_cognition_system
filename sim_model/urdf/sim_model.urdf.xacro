@@ -344,9 +344,10 @@
     </sensor>
   </gazebo>
 
-  <joint name="hokuyo_joint" type="fixed">
-    <axis xyz="0 1 0" />
+  <joint name="hokuyo_joint" type="revolute">
+    <axis xyz="0 1 1" />
     <!-- <origin xyz="0 0 ${height3 - axel_offset/2}" rpy="0 0 0"/> -->
+    <limit lower="-${3.15/2}" upper="${3.15/2}"  effort="50" velocity="1"/>
     <origin xyz="0.50 0.0 0.15" rpy="0 0 0"/>
     <parent link="base_link"/>
     <child link="hokuyo_link"/>
@@ -361,7 +362,7 @@
     </collision>
 
     <visual>
-      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <origin xyz="0 0 0" rpy="0 0.0 0.0"/>
       <geometry>
         <mesh filename="package://robot_cognition_system/sim_model/meshes/hokuyo.dae"/>
       </geometry>
@@ -374,6 +375,15 @@
     </inertial>
   </link>
 
+<!-- Laser Pan & Tilt actuator -->
+<transmission name="pan_trans">
+  <type>transmission_interface/SimpleTransmission</type>
+  <joint name="hokuyo_joint"/>
+  <actuator name="laser_pan_unit">
+    <hardwareInterface>EffortJointInterface</hardwareInterface>
+    <mechanicalReduction>1</mechanicalReduction>
+  </actuator>
+</transmission>
 
 
 

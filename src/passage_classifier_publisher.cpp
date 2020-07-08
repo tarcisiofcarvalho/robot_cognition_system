@@ -28,6 +28,9 @@ using namespace std;
 // Common Point Cloud type used in this processing
 typedef pcl::PointCloud<pcl::PointXYZRGBA> PointCloud;
 
+
+pcl::visualization::CloudViewer viewer2 ("Show Points");
+
 // UPD published data
 PointCloud::Ptr upd_data;
 
@@ -56,6 +59,7 @@ void classify_passage_condition(const boost::shared_ptr<const pcl::PointCloud<pc
     float greenCount = 0;
     float total = 0;
 
+    // 4. Search the points
     for( it= laser->begin(); it!= laser->end(); it++){
 
       // Note: Changing the axis to be compatible with kinect axis data
@@ -70,13 +74,6 @@ void classify_passage_condition(const boost::shared_ptr<const pcl::PointCloud<pc
       std::vector<int> pointIdxNKNSearch(K);
       std::vector<float> pointNKNSquaredDistance(K);
 
-      // std::cout << "Laser point (" 
-      //           << searchPoint.x 
-      //           << " " << searchPoint.y 
-      //           << " " << searchPoint.z 
-      //           << ")"
-      //           << std::endl;
-
       if ( kdtree.nearestKSearch (searchPoint, K, pointIdxNKNSearch, pointNKNSquaredDistance) > 0 )
       {
         total += pointIdxNKNSearch.size ();
@@ -85,67 +82,22 @@ void classify_passage_condition(const boost::shared_ptr<const pcl::PointCloud<pc
           if(cloud->points[ pointIdxNKNSearch[i]].g==255){
             greenCount++;
           }
-          // else{
-          //   cout  << " " << unsigned(cloud->points[ pointIdxNKNSearch[i]].r);
-          //   cout  << " " << unsigned(cloud->points[ pointIdxNKNSearch[i]].g);
-          //   cout  << " " << unsigned(cloud->points[ pointIdxNKNSearch[i]].b);        
-          // }
 
-          // std::cout << "    "  <<   cloud->points[ pointIdxNKNSearch[i] ].x 
-          //           << " " << cloud->points[ pointIdxNKNSearch[i] ].y 
-          //           << " " << cloud->points[ pointIdxNKNSearch[i] ].z
-          //           << "(color: "
-          //           << " " << unsigned(cloud->points[ pointIdxNKNSearch[i]].r)
-          //           << " " << unsigned(cloud->points[ pointIdxNKNSearch[i]].g)
-          //           << " " << unsigned(cloud->points[ pointIdxNKNSearch[i]].b)
-          //           << ") "
-          //           << " (squared distance: " << pointNKNSquaredDistance[i] << ")" << std::endl;
       }
 
-      // Neighbors within radius search
-
-      // std::vector<int> pointIdxRadiusSearch;
-      // std::vector<float> pointRadiusSquaredDistance;
-
-      // float radius = 256.0f * rand () / (RAND_MAX + 1.0f);
-
-      // std::cout << "Neighbors within radius search at (" << searchPoint.x 
-      //           << " " << searchPoint.y 
-      //           << " " << searchPoint.z
-      //           << ") with radius=" << radius << std::endl;
-
-
-      // if ( kdtree.radiusSearch (searchPoint, radius, pointIdxRadiusSearch, pointRadiusSquaredDistance) > 0 )
-      // {
-      //   for (size_t i = 0; i < pointIdxRadiusSearch.size (); ++i)
-      //     std::cout << "    "  <<   cloud->points[ pointIdxRadiusSearch[i] ].x 
-      //               << " " << cloud->points[ pointIdxRadiusSearch[i] ].y 
-      //               << " " << cloud->points[ pointIdxRadiusSearch[i] ].z 
-      //               << " " << cloud->points[ pointIdxRadiusSearch[i]].rgba
-      //               << " (squared distance: " << pointRadiusSquaredDistance[i] << ")" << std::endl;
-      // }
-      // printf("Finish: Passage condition classification \n");
-      // printf("=================================================== \n\n\n");
     }
 
-    // 4. Determine the passage condition
+    // 5. Determine the passage condition
     std_msgs::String msg;
-    // cout << (greenCount / total);
-    // cout << " ";
+
     if((greenCount / total) >= std::stof (getenv("MINIMUM_GREEN_POINTS"))){
       msg.data = "safe";
-      // cout << greenCount;
-      // cout << " ";
-      // cout << "\033[1;32m Safe passage condition\033[0m\n";
 
     }else{
       msg.data = "unsafe";
-      // cout << greenCount;
-      // cout << " ";
-      // cout << "\033[1;31m Unsafe passage condition\033[0m\n";
     }
 
-    // 5. Publish the passage condition
+    // 6. Publish the passage condition
     ros::NodeHandle nhpass;
     ros::Publisher pub = nhpass.advertise<std_msgs::String> ("passage_condition", 1);
     pub.publish (msg);
@@ -208,28 +160,84 @@ void laser_callback(const PointCloud::ConstPtr& msg){
     // 3. Translation the laser points
     pcl::transformPointCloud(*laser_data, *laser_data, translationMatrix);
 
+
+    // 4. Rotation matrix definition for laser pan & tilt
+    Eigen::Matrix<float, 4, 4> tiltRotationMatrix;
+  
+    // Z (Tilt)
+    tiltRotationMatrix(0,0) = cos(-1 * std::stof (getenv("LASER_TILT")));
+    tiltRotationMatrix(0,1) = -sin(-1 * std::stof (getenv("LASER_TILT")));
+    tiltRotationMatrix(0,2) = 0;
+    tiltRotationMatrix(0,3) = 0;
+
+    tiltRotationMatrix(1,0) = sin(-1 * std::stof (getenv("LASER_TILT")));
+    tiltRotationMatrix(1,1) = cos(-1 * std::stof (getenv("LASER_TILT")));
+    tiltRotationMatrix(1,2) = 0;
+    tiltRotationMatrix(1,3) = 0;
+
+    tiltRotationMatrix(2,0) = 0;
+    tiltRotationMatrix(2,1) = 0;
+    tiltRotationMatrix(2,2) = 1;
+    tiltRotationMatrix(2,3) = 0;  
+
+    tiltRotationMatrix(3,0) = 0;
+    tiltRotationMatrix(3,1) = 0;
+    tiltRotationMatrix(3,2) = 0;
+    tiltRotationMatrix(3,3) = 1;
+
+
+    // Tilt Transformation
+    pcl::transformPointCloud(*laser_data, *laser_data, tiltRotationMatrix);
+
+
+    // Y (Pan)
+    Eigen::Matrix<float, 4, 4> panRotationMatrix;
+
+    panRotationMatrix(0,0) = cos(std::stof (getenv("LASER_PAN")));
+    panRotationMatrix(0,1) = 0;
+    panRotationMatrix(0,2) = sin(std::stof (getenv("LASER_PAN")));
+    panRotationMatrix(0,3) = 0;
+
+    panRotationMatrix(1,0) = 0;
+    panRotationMatrix(1,1) = 1;
+    panRotationMatrix(1,2) = 0;
+    panRotationMatrix(1,3) = 0;
+
+    panRotationMatrix(2,0) = -sin(std::stof (getenv("LASER_PAN")));
+    panRotationMatrix(2,1) = 0;
+    panRotationMatrix(2,2) = cos(std::stof (getenv("LASER_PAN")));;
+    panRotationMatrix(2,3) = 0;  
+
+    panRotationMatrix(3,0) = 0;
+    panRotationMatrix(3,1) = 0;
+    panRotationMatrix(3,2) = 0;
+    panRotationMatrix(3,3) = 1;
+
+    // Pan Transformation
+    pcl::transformPointCloud(*laser_data, *laser_data, panRotationMatrix);
+
     // 4. Classify the passage condition
-    classify_passage_condition(upd_data, laser_data);
+    // classify_passage_condition(upd_data, laser_data);
 
 
     // 4. Include laser data into kinect UPD processed data
-    // pcl::PointXYZRGBA point;
-    // pcl::PointCloud<pcl::PointXYZRGBA>::iterator it;
+    pcl::PointXYZRGBA point2;
+    pcl::PointCloud<pcl::PointXYZRGBA>::iterator it2;
 
-    // for( it= msg2->begin(); it!= msg2->end(); it++){
-    //     point.x = it->z;
-    //     point.y = it->y;
-    //     point.z = -it->x;
-    //     point.r = 0;
-    //     point.g = 0;
-    //     point.b = 254;
-    //     point.a = 255;
-    //     upd_data->push_back(point);
-    // }
+    for( it2= laser_data->begin(); it2!= laser_data->end(); it2++){
+        point2.x = it2->z;
+        point2.y = it2->y;
+        point2.z = -it2->x;
+        point2.r = 0;
+        point2.g = 0;
+        point2.b = 254;
+        point2.a = 255;
+        upd_data->push_back(point2);
+    }
   // printf("- Laser call back -");
-  // if (!viewer2.wasStopped()){
-  //     viewer2.showCloud (upd_data);
-  // }
+  if (!viewer2.wasStopped()){
+      viewer2.showCloud (upd_data);
+  }
 
     // // 5. Reseting the data
     // upd_result.reset(new pcl::PointCloud<pcl::PointXYZRGBA>);
