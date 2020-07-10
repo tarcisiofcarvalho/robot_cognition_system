@@ -15,9 +15,19 @@
             file="$(find robot_cognition_system)/sim_model/config/diffdrive.yaml"
             ns="r2d2_diff_drive_controller" />
 
+  <rosparam command="load"
+            file="$(find robot_cognition_system)/sim_model/config/laser.yaml"
+            ns="r2d2_laser_controller" />
+
+    <rosparam command="load"
+            file="$(find robot_cognition_system)/sim_model/config/laser_pan.yaml"
+            ns="r2d2_laser_pan_controller" />          
+
   <node name="r2d2_controller_spawner" pkg="controller_manager" type="spawner"
     args="r2d2_joint_state_controller
           r2d2_diff_drive_controller
+          r2d2_laser_controller
+          r2d2_laser_pan_controller
           --shutdown-timeout 3"/>
 
   <node name="rqt_robot_steering" pkg="rqt_robot_steering" type="rqt_robot_steering">

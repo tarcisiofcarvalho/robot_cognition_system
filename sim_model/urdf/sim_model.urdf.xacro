@@ -345,13 +345,22 @@
   </gazebo>
 
   <joint name="hokuyo_joint" type="revolute">
-    <axis xyz="0 1 1" />
+    <axis xyz="0 1 0" />
+    <!-- <origin xyz="0 0 ${height3 - axel_offset/2}" rpy="0 0 0"/> -->
+    <limit lower="-${3.15/2}" upper="${3.15/2}"  effort="50" velocity="1"/>
+    <origin xyz="0.0 0.0 0.0" rpy="0 0 0"/>
+    <parent link="hokuyo_base_link"/>
+    <child link="hokuyo_link"/>
+  </joint>
+
+  <joint name="hokuyo_joint_pan" type="revolute">
+    <axis xyz="0 0 1" />
     <!-- <origin xyz="0 0 ${height3 - axel_offset/2}" rpy="0 0 0"/> -->
     <limit lower="-${3.15/2}" upper="${3.15/2}"  effort="50" velocity="1"/>
     <origin xyz="0.50 0.0 0.15" rpy="0 0 0"/>
     <parent link="base_link"/>
-    <child link="hokuyo_link"/>
-  </joint>
+    <child link="hokuyo_base_link"/>
+  </joint>  
 
   <link name="hokuyo_link">
     <collision>
@@ -360,14 +369,12 @@
     <box size="0.1 0.1 0.1"/>
       </geometry>
     </collision>
-
     <visual>
       <origin xyz="0 0 0" rpy="0 0.0 0.0"/>
       <geometry>
         <mesh filename="package://robot_cognition_system/sim_model/meshes/hokuyo.dae"/>
       </geometry>
     </visual>
-
     <inertial>
       <mass value="1e-5" />
       <origin xyz="0 0 0" rpy="0 0 0"/>
@@ -375,15 +382,46 @@
     </inertial>
   </link>
 
+  <link name="hokuyo_base_link">
+    <visual>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <geometry>
+        <box size="0.02 0.02 0.02"/>
+      </geometry>
+      <material name="black"/>
+    </visual>
+    <collision>
+      <geometry>
+        <box size="0.02 0.02 0.02"/>
+      </geometry>
+    </collision>
+    <inertial>
+      <mass value="1"/>
+      <inertia ixx="1.0" ixy="0.0" ixz="0.0" iyy="1.0" iyz="0.0" izz="1.0"/>
+    </inertial>       
+  </link>
+
+
+  <transmission name="laser_trans">
+    <type>transmission_interface/SimpleTransmission</type>
+    <actuator name="laser_motor">
+      <mechanicalReduction>1</mechanicalReduction>
+    </actuator>
+    <joint name="hokuyo_joint">
+      <hardwareInterface>PositionJointInterface</hardwareInterface>
+    </joint>
+  </transmission>
+
 <!-- Laser Pan & Tilt actuator -->
-<transmission name="pan_trans">
-  <type>transmission_interface/SimpleTransmission</type>
-  <joint name="hokuyo_joint"/>
-  <actuator name="laser_pan_unit">
-    <hardwareInterface>EffortJointInterface</hardwareInterface>
-    <mechanicalReduction>1</mechanicalReduction>
-  </actuator>
-</transmission>
+  <transmission name="laser_trans_pan">
+    <type>transmission_interface/SimpleTransmission</type>
+    <actuator name="laser_motor_pan">
+      <mechanicalReduction>1</mechanicalReduction>
+    </actuator>
+    <joint name="hokuyo_joint_pan">
+      <hardwareInterface>PositionJointInterface</hardwareInterface>
+    </joint>
+  </transmission>
 
 
 
