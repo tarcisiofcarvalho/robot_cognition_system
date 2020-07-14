@@ -5,17 +5,31 @@
         <title>Robot Cognition System Interface</title>
         <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
         <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+        <link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">
     </head>
     <body style="width: 100%;">
-        <div id="app" style="border: 8px; border-color: hotpink;">
-            <div style="border: 1px; background-color: red; max-width: 200px; max-height: 200px; padding: 40px;" v-if="passage_condition=='unsafe'">
-                Unsafe Passage Condition {{ passage_condition }}
-                
-            </div>
-            <div style="border: 1px; background-color:green; max-width: 200px; max-height: 200px; padding: 40px" v-else>
-                Safe Passage Condition {{ passage_condition }}
-            </div>  
-        </div>      
+        <div class="w3-container w3-center w3-margin">
+            <div id="app">
+                <div class="w3-container w3-red w3-center" v-if="passage_condition=='unsafe'">
+                    <p>Unsafe Passage Condition {{ passage_condition }}</p>
+                </div>
+                <div class="w3-container w3-green w3-center" v-else>
+                    <p>Safe Passage Condition {{ passage_condition }}</p>
+                </div> 
+                <div class="w3-container w3-bar w3-center w3-marging">
+                    <p>Laser Pan Degree</p>
+                    <button class="w3-button w3-blue w3-circle w3-smal" v-on:click="minus_pan()">-</button>
+                    <input v-model="laser_pan"/>
+                    <button class="w3-button w3-green w3-circle w3-smal" v-on:click="plus_pan()">+</button>
+                </div>
+                <div class="w3-container w3-bar w3-center w3-marging">
+                    <p>Laser Tilt Degree</p>
+                    <button class="w3-button w3-blue w3-circle w3-smal" v-on:click="minus_tilt()">-</button>
+                    <input v-model="laser_tilt"/>
+                    <button class="w3-button w3-green w3-circle w3-smal" v-on:click="plus_tilt()">+</button>
+                </div>                
+            </div> 
+        </div>     
     </body>
     <script src="/static/index.js"></script>
 </html>

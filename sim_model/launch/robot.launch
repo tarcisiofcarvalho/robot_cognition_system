@@ -1,6 +1,5 @@
 <launch>
-  <arg name="model" default="$(find robot_cognition_system)/sim_model/urdf/01-myfirst.urdf"/>
-  <arg name="gui" default="true" />
+  <arg name="model" default="$(find robot_cognition_system)/sim_model/urdf/sim_model.urdf.xacro"/>
   <arg name="rvizconfig" default="$(find robot_cognition_system)/sim_model/rviz/urdf.rviz" />
 
   <include file="$(find robot_cognition_system)/sim_model/launch/gazebo.launch">
@@ -12,8 +11,32 @@
   <rosparam command="load"
             file="$(find robot_cognition_system)/sim_model/config/joints.yaml"
             ns="r2d2_joint_state_controller" />
+  <rosparam command="load"
+            file="$(find robot_cognition_system)/sim_model/config/diffdrive.yaml"
+            ns="r2d2_diff_drive_controller" />
 
-  <node name="r2d2_controller_spawner" pkg="controller_manager" type="spawner"
+  <rosparam command="load"
+            file="$(find robot_cognition_system)/sim_model/config/laser_tilt.yaml"
+            ns="r2d2_laser_tilt_controller" />
+
+    <rosparam command="load"
+            file="$(find robot_cognition_system)/sim_model/config/laser_pan.yaml"
+            ns="r2d2_laser_pan_controller" />          
+
+  <node name="r2d2_controller_spawner" pkg="controller_manager" type="spawner" 
     args="r2d2_joint_state_controller
+          r2d2_diff_drive_controller
+          r2d2_laser_tilt_controller
+          r2d2_laser_pan_controller
           --shutdown-timeout 3"/>
+
+  <node name="joint_state_publisher"
+        pkg="joint_state_publisher"
+        type="joint_state_publisher">
+    <param name="use_gui" value="false"/>
+  </node>
+
+  <node name="rqt_robot_steering" pkg="rqt_robot_steering" type="rqt_robot_steering">
+    <param name="default_topic" value="/r2d2_diff_drive_controller/cmd_vel"/>
+  </node>
 </launch>

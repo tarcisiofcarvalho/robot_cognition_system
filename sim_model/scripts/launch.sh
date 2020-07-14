@@ -13,4 +13,4 @@ clear
 # roslaunch robot_cognition_system display.launch model:=../urdf/08-macroed.urdf.xacro
 # roslaunch robot_cognition_system gazebo.launch
 # roslaunch robot_cognition_system display.launch model:=../urdf/sim_model.urdf.xacro
-roslaunch robot_cognition_system diffdrive.launch
+roslaunch robot_cognition_system robot.launch
