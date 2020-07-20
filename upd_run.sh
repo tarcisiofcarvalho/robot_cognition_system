@@ -15,6 +15,7 @@ export UPD_REDUCTION_PERCENT="25"
 export LASER_TO_KINECT_X="0"
 export LASER_TO_KINECT_Y="0"
 export LASER_TO_KINECT_Z="0.20"
+export ROS_UPD_LOOP_RATE="0.30"
 
 # Starting the upd publisher
 ../../devel/lib/robot_cognition_system/upd_publisher

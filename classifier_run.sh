@@ -9,6 +9,7 @@ export LASER_TO_KINECT_Z="0.20"
 export MINIMUM_GREEN_POINTS="0.3"
 export LASER_TILT="0.3"
 export LASER_PAN="-0.2"
+export ROS_LOOP_RATE="0.8"
 
 # Starting the classifier publisher
 ../../devel/lib/robot_cognition_system/passage_classifier_publisher

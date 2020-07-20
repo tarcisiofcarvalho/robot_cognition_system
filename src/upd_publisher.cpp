@@ -28,14 +28,9 @@ typedef pcl::PointCloud<pcl::PointXYZ> PointCloud2;
 typedef pcl::PointCloud<pcl::PointSurfel> PointCloudSurfel;
 typedef pcl::PointXYZRGBA PointT;
 
-
-
 pcl::io::OctreePointCloudCompression<pcl::PointXYZRGBA>* PointCloudEncoder;
 pcl::io::OctreePointCloudCompression<pcl::PointXYZRGBA>* PointCloudDecoder;
-// pcl::visualization::CloudViewer viewer ("Show UPD");
-// pcl::visualization::CloudViewer viewer2 ("Show Points");
-// boost::shared_ptr<pcl::visualization::PCLVisualizer> viewer2;
-// pcl::visualization::CloudViewer viewerUPD ("Show UPD");
+
 
 /*
 Return a RGB colour value given a scalar v in the range [vmin,vmax]
@@ -213,297 +208,172 @@ pcl::PointCloud<pcl::PointXYZRGBA>::Ptr getAsColorMap(double _traversability_ind
 
 }
 
-PointCloud::Ptr upd_result;
+class UPDProcess{
+    public:
+        UPDProcess(){
+            // 1. Subscribe to the Kinect Node
+            sub_kinect_ = nh_.subscribe<PointCloud>("/camera/depth/points", 1, &UPDProcess::callback, this);
 
-PointCloud::Ptr upd_result2;
+            // 2. Publish UPD data
+            pub_upd_ = nh_.advertise<PointCloud> ("upd_point_cloud_classification", 1);
 
-void process_laser(const PointCloud::ConstPtr& msg){
-    // printf ("Cloud: width = %d, height = %d, sensor_origin = %d\n", msg->width, msg->height, msg->sensor_origin_);
-    // printf("**** Laser sensor orientation **** ");
-    // Eigen::Quaternionf myQuaternion = msg->sensor_orientation_; //The Quaternion to print
-
-    // std::cout << "Debug: " << "sensor_orientation_.w() = " << myQuaternion.w() << std::endl; //Print out the scalar
-    // std::cout << "Debug: " << "sensor_orientation_.vec() = " << myQuaternion.vec() << std::endl; //Print out the orientation vector
+            // 3. Publish UPD Rviz data
+            pub_upd_rviz_ = nh_.advertise<sensor_msgs::PointCloud2> ("upd_point_cloud_classification_rviz", 1);
+        }
     
-    // Eigen::Quaternionf myQuaternion2 = msg->sensor_orientation_; //The Quaternion to print
+        void callback(const PointCloud::ConstPtr& msg){
+            // 1. Converting from const to non const boost
+            PointCloud::Ptr msg2 = boost::const_pointer_cast<PointCloud>(msg);
 
-    // std::cout << "Debug: " << "sensor_origin_.w() = " << myQuaternion2.w() << std::endl; //Print out the scalar
-    // std::cout << "Debug: " << "sensor_origin_.vec() = " << myQuaternion2.vec() << std::endl; //Print out the orientation vector
+            // Rotation
+            Eigen::Matrix4f eRot;
+            Eigen::Quaternionf PCRot;
+            Eigen::Vector3f PCTrans;
+            Eigen::Matrix<float, 4, 4> rotMatrix;
 
-    // BOOST_FOREACH (const pcl::PointXYZRGBA& pt, msg->points)
-    // printf ("\t(%f, %f, %f)\n", pt.x, pt.y, pt.z);
-    // upd_result->sensor_orientation_ = Eigen::Quaternionf (0, -1, 0, 0);
+            // Counterclockwise rotation around y axis
+            rotMatrix(0,0) = cos(-PI);
+            rotMatrix(0,1) = 0;
+            rotMatrix(0,2) = sin(-PI);
+            rotMatrix(0,3) = 0;
 
-    // Rotation
-    // Eigen::Matrix4f eRot;
-    // Eigen::Quaternionf PCRot;
-    // Eigen::Vector3f PCTrans;
+            rotMatrix(1,0) = 0;
+            rotMatrix(1,1) = 1;
+            rotMatrix(1,2) = 0;
+            rotMatrix(1,3) = 0;
 
-    // 1. Casting the laser point cloud object
-    PointCloud::Ptr msg2 = boost::const_pointer_cast<PointCloud>(msg);
+            rotMatrix(2,0) = -sin(-PI);
+            rotMatrix(2,1) = 0;
+            rotMatrix(2,2) = cos(-PI);
+            rotMatrix(2,3) = 0;    
 
-    // 2. Translation matrix definition for laser 
-    // point frame to kinect frame
-    Eigen::Matrix<float, 4, 4> translationMatrix;
+            rotMatrix(3,0) = 0;
+            rotMatrix(3,1) = 0;
+            rotMatrix(3,2) = 0;
+            rotMatrix(3,3) = 1;
 
-    translationMatrix(0,0) = 1;
-    translationMatrix(0,1) = 0;
-    translationMatrix(0,2) = 0;
-    translationMatrix(0,3) = std::stof (getenv("LASER_TO_KINECT_X"));
+            
+            pcl::transformPointCloud(*msg2, *msg2, rotMatrix);
 
-    translationMatrix(1,0) = 0;
-    translationMatrix(1,1) = 1;
-    translationMatrix(1,2) = 0;
-    translationMatrix(1,3) = std::stof (getenv("LASER_TO_KINECT_Y"));;
+            // Clockwise rotation around z axis
+            rotMatrix(0,0) = cos(-PI);
+            rotMatrix(0,1) = -sin(-PI);
+            rotMatrix(0,2) = 0;
+            rotMatrix(0,3) = 0;
 
-    translationMatrix(2,0) = 0;
-    translationMatrix(2,1) = 0;
-    translationMatrix(2,2) = 1;
-    translationMatrix(2,3) = std::stof (getenv("LASER_TO_KINECT_Z"));;    
+            rotMatrix(1,0) = sin(-PI);
+            rotMatrix(1,1) = cos(-PI);
+            rotMatrix(1,2) = 0;
+            rotMatrix(1,3) = 0;
 
-    translationMatrix(3,0) = 0;
-    translationMatrix(3,1) = 0;
-    translationMatrix(3,2) = 0;
-    translationMatrix(3,3) = 1;
-   
-    // 3. Translation the laser points
-    pcl::transformPointCloud(*msg2, *msg2, translationMatrix);
+            rotMatrix(2,0) = 0;
+            rotMatrix(2,1) = 0;
+            rotMatrix(2,2) = 1;
+            rotMatrix(2,3) = 0;    
 
-    // 4. Include laser data into kinect UPD processed data
-    pcl::PointXYZRGBA point;
-    pcl::PointCloud<pcl::PointXYZRGBA>::iterator it;
-    upd_result2 = upd_result;
-    for( it= msg2->begin(); it!= msg2->end(); it++){
-        point.x = it->z;
-        point.y = it->y;
-        point.z = -it->x;
-        point.r = 0;
-        point.g = 0;
-        point.b = 254;
-        point.a = 255;
-        upd_result2->push_back(point);
-    }
+            rotMatrix(3,0) = 0;
+            rotMatrix(3,1) = 0;
+            rotMatrix(3,2) = 0;
+            rotMatrix(3,3) = 1;
 
-    // if (!viewer2.wasStopped()){
-    //       viewer2.showCloud (upd_result2);
-    // }
-
-    // // 5. Reseting the data
-    // upd_result.reset(new pcl::PointCloud<pcl::PointXYZRGBA>);
-}
+            
+            pcl::transformPointCloud(*msg2, *msg2, rotMatrix);
 
 
-/* This function receives the OpenNI data from a kinect device, 
-    filter and classify the point cloud data with UPD classifier, 
-    and publish the UPD classified data */
-void process_upd(const PointCloud::ConstPtr& msg)
-{
-    // printf ("Cloud: width = %d, height = %d\n", msg->width, msg->height);
-    // printf("**** Kinect sensor orientation **** ");
-    // Eigen::Quaternionf myQuaternion = msg->sensor_orientation_; //The Quaternion to print
+            // 2. Defining UPD
+            upd *m_upd;
+            m_upd = new upd;
 
-    // std::cout << "Debug: " << "sensor_orientation_.w() = " << myQuaternion.w() << std::endl; //Print out the scalar
-    // std::cout << "Debug: " << "sensor_orientation_.vec() = " << myQuaternion.vec() << std::endl; //Print out the orientation vector
-    
-    // Eigen::Quaternionf myQuaternion2 = msg->sensor_orientation_; //The Quaternion to print
+            // 3. Appling filters
+            bool showStatistics = false;
 
-    // std::cout << "Debug: " << "sensor_origin_.w() = " << myQuaternion2.w() << std::endl; //Print out the scalar
-    // std::cout << "Debug: " << "sensor_origin_.vec() = " << myQuaternion2.vec() << std::endl; //Print out the orientation vector
-      
-    // BOOST_FOREACH (const pcl::PointXYZRGBA& pt, msg->points)
-    // printf ("\t(%f, %f, %f)\n", pt.x, pt.y, pt.z);
+            // 3.1 Compression definition
+            pcl::io::compression_Profiles_e compressionProfile = pcl::io::MED_RES_ONLINE_COMPRESSION_WITH_COLOR;
 
-    // 1. Converting from const to non const boost
-    PointCloud::Ptr msg2 = boost::const_pointer_cast<PointCloud>(msg);
+            // 3.2 Encoder and Decoder definition
+            PointCloudEncoder = new pcl::io::OctreePointCloudCompression<pcl::PointXYZRGBA> (compressionProfile, showStatistics);
+            PointCloudDecoder = new pcl::io::OctreePointCloudCompression<pcl::PointXYZRGBA> ();    
 
-        // Rotation
-    Eigen::Matrix4f eRot;
-    Eigen::Quaternionf PCRot;
-    Eigen::Vector3f PCTrans;
-    Eigen::Matrix<float, 4, 4> rotMatrix;
+            // 3.3 Removing NAN data
+            PointCloud::Ptr outputCloud (new PointCloud);
+            PointCloud::Ptr cloudOut (new PointCloud);
+            std::vector<int> indices;
+            pcl::removeNaNFromPointCloud(*msg2,*outputCloud, indices);
 
-    // Counterclockwise rotation around y axis
-    rotMatrix(0,0) = cos(-PI);
-    rotMatrix(0,1) = 0;
-    rotMatrix(0,2) = sin(-PI);
-    rotMatrix(0,3) = 0;
+            // 3.4 Defining compress data
+            std::stringstream compressedData;
 
-    rotMatrix(1,0) = 0;
-    rotMatrix(1,1) = 1;
-    rotMatrix(1,2) = 0;
-    rotMatrix(1,3) = 0;
+            // 3.5 Compress the point cloud
+            PointCloudEncoder->encodePointCloud (outputCloud, compressedData);
 
-    rotMatrix(2,0) = -sin(-PI);
-    rotMatrix(2,1) = 0;
-    rotMatrix(2,2) = cos(-PI);
-    rotMatrix(2,3) = 0;    
+            // 3.5 Decompress the point cloud
+            PointCloudDecoder->decodePointCloud (compressedData, cloudOut);
 
-    rotMatrix(3,0) = 0;
-    rotMatrix(3,1) = 0;
-    rotMatrix(3,2) = 0;
-    rotMatrix(3,3) = 1;
+            delete PointCloudEncoder;
+            delete PointCloudDecoder;
 
-    
-    pcl::transformPointCloud(*msg2, *msg2, rotMatrix);
+            // 3.6 Vox grid reduction
+            pcl::VoxelGrid<pcl::PointXYZRGBA> sor;
+            sor.setInputCloud (cloudOut);
+            sor.setLeafSize (std::stof(getenv("UPD_VOX_GRID_LEAF_X")), std::stof(getenv("UPD_VOX_GRID_LEAF_Y")), std::stof(getenv("UPD_VOX_GRID_LEAF_Z")));
+            PointCloud::Ptr cloud_filtered (new PointCloud);
+            sor.filter (*cloud_filtered);
 
-    // Clockwise rotation around z axis
-    rotMatrix(0,0) = cos(-PI);
-    rotMatrix(0,1) = -sin(-PI);
-    rotMatrix(0,2) = 0;
-    rotMatrix(0,3) = 0;
+            // 4. Set filtered point cloud in UPD 
+            m_upd->setInputCloud(cloud_filtered);
 
-    rotMatrix(1,0) = sin(-PI);
-    rotMatrix(1,1) = cos(-PI);
-    rotMatrix(1,2) = 0;
-    rotMatrix(1,3) = 0;
+            // 5. Set UPD radius
+            m_upd->setSearchRadius(std::stod(getenv("UPD_SEARCH_RADIUS")));
 
-    rotMatrix(2,0) = 0;
-    rotMatrix(2,1) = 0;
-    rotMatrix(2,2) = 1;
-    rotMatrix(2,3) = 0;    
+            // 6. Run UPD
+            m_upd->runUPD_radius();
 
-    rotMatrix(3,0) = 0;
-    rotMatrix(3,1) = 0;
-    rotMatrix(3,2) = 0;
-    rotMatrix(3,3) = 1;
+            // 7. Get UPD
+            m_upd->getUPD();
 
-    
-    pcl::transformPointCloud(*msg2, *msg2, rotMatrix);
+            // 8. Get the colored map
+            
+            // 8.1 Prepare the parameters data
+            PointCloud::Ptr m_cloud_color_UPD (new PointCloud);
 
-    // if (!viewer2.wasStopped()){
-    //       viewer2.showCloud (msg2);
-    // }
-    // pcl::PointXYZRGBA point;
-    // int counter = 0;
-    // pcl::PointCloud<pcl::PointXYZRGBA>::iterator it;
-    // PointCloud::Ptr newMsg (new PointCloud);
-    // for( it= msg2->begin(); it!= msg2->end(); it++){
-    // if(counter%50==0)
-    //     point.x = it->x;
-    //     point.y = it->y;
-    //     point.z = it->z;
-    //     point.r = it->r;
-    //     point.g = it->g;
-    //     point.b = it->b;
-    //     point.a = it->a;
-    //     newMsg->push_back(point);
-    //     // outputCloud->push_back (pcl::PointXYZ (it->x, it->y, it->z));
-    //     counter ++;   
-    // }
-    // 2. New UPD object
-    upd *m_upd;
-    m_upd = new upd;
+            double unevenness = std::stod (getenv("UPD_UNEVENNESS"));
+            double unevennessMax = std::stod (getenv("UPD_UNEVENNESS_MAX"));
+            double radAngle = (std::stod(getenv("UPD_RAD_ANGL")) * M_PI / 180);
+            
+            // 8.2 Get colored map
+            m_upd->setColorMapType(false);
+            m_upd->getAsColorMap(m_cloud_color_UPD,
+                                (unevenness)/unevennessMax,
+                                radAngle);
+            
+            // 8. Publish the UPD classified point clouds
+            pub_upd_.publish (m_cloud_color_UPD);
 
-    // 3. Apply filters
-    bool showStatistics = false;
+            // 9. Publish the UPD classified point clouds to Rviz
+            // sensor_msgs::PointCloud2 msgcloud;
+            // pcl::toROSMsg(*m_cloud_color_UPD.get(), msgcloud); 
+            // std::string tf_frame;
+            // tf_frame = "/base_link";
+            // nh_.param("frame_id", tf_frame, std::string("/base_link"));
+            // msgcloud.header.frame_id = tf_frame;
+            // msgcloud.header.stamp = ros::Time::now();
+            // pub_upd_rviz_.publish (msgcloud);
 
-    // for a full list of profiles see: /io/include/pcl/compression/compression_profiles.h
-    pcl::io::compression_Profiles_e compressionProfile = pcl::io::MED_RES_ONLINE_COMPRESSION_WITH_COLOR;
+            delete m_upd;
 
-    // instantiate point cloud compression for encoding and decoding
-    PointCloudEncoder = new pcl::io::OctreePointCloudCompression<pcl::PointXYZRGBA> (compressionProfile, showStatistics);
-    PointCloudDecoder = new pcl::io::OctreePointCloudCompression<pcl::PointXYZRGBA> ();    
-    // ****** Remove NAN data *******
-    PointCloud::Ptr outputCloud (new PointCloud);
-    PointCloud::Ptr cloudOut (new PointCloud);
-    std::vector<int> indices;
-    pcl::removeNaNFromPointCloud(*msg2,*outputCloud, indices);
+            printf("UPD Processed \n");
+            ros::Rate loop_rate(std::stod (getenv("ROS_UPD_LOOP_RATE")));
+            loop_rate.sleep();
 
-    // ******* Compress point cloud ********
-    // stringstream to store compressed point cloud
-    std::stringstream compressedData;
+        }
 
-    // compress point cloud
-    PointCloudEncoder->encodePointCloud (outputCloud, compressedData);
+    private:
+        ros::NodeHandle nh_;
+        ros::Subscriber sub_kinect_;
+        ros::Publisher pub_upd_;
+        ros::Publisher pub_upd_rviz_;
+};
 
-    // decompress point cloud
-    PointCloudDecoder->decodePointCloud (compressedData, cloudOut);
-
-    // Voxel Grid - points reduction
-    pcl::VoxelGrid<pcl::PointXYZRGBA> sor;
-    sor.setInputCloud (cloudOut);
-    sor.setLeafSize (std::stof(getenv("UPD_VOX_GRID_LEAF_X")), std::stof(getenv("UPD_VOX_GRID_LEAF_Y")), std::stof(getenv("UPD_VOX_GRID_LEAF_Z")));
-    PointCloud::Ptr cloud_filtered (new PointCloud);
-    sor.filter (*cloud_filtered);
-
-    // ****** Save point cloud data file *******
-    // pcl::io::savePCDFile("test_pcd_rgba_compressed_may_25th.pcd", *cloud_filtered);
-
-    // 3. Set input cloud
-    // PointCloudSurfel::Ptr updInput (new PointCloudSurfel);
-
-    // pcl::copyPointCloud(*cloud_filtered, *updInput);
-
-    m_upd->setInputCloud(cloud_filtered);
-
-    // printf("Info: setInpuCloud");
-    // 3. Set radius
-    m_upd->setSearchRadius(std::stod(getenv("UPD_SEARCH_RADIUS")));
-
-    // 4. Run UPD radius
-    m_upd->runUPD_radius();
-
-    // 5. Get UPD
-    m_upd->getUPD();
-
-    // 6. Get the colored map
-    
-    // 6.1 Prepare the parameters data
-    PointCloud::Ptr m_cloud_color_UPD (new PointCloud);
-
-    double unevenness = std::stod (getenv("UPD_UNEVENNESS"));
-    double unevennessMax = std::stod (getenv("UPD_UNEVENNESS_MAX"));
-    double radAngle = (std::stod(getenv("UPD_RAD_ANGL")) * M_PI / 180);
-    
-    // 6.2 Get colored map
-    m_upd->setColorMapType(false);
-    m_upd->getAsColorMap(m_cloud_color_UPD,
-                           (unevenness)/unevennessMax,
-						   radAngle);
-    //  viewer.setBackgroundColor(0.05, 0.05, 0.05, 0);
-
-    // if (!viewer.wasStopped ()) {
-    //     viewer.removePointCloud();
-    //     pcl::visualization::PointCloudColorHandlerRGBField<PointT> rgb_color(m_cloud_color_UPD);
-    //     viewer.addPointCloud (m_cloud_color_UPD, rgb_color, "cloud");
-    //     viewer.setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 2, "cloud");
-    //     viewer.spin ();
-    // }
-    upd_result = m_cloud_color_UPD;
-
-    // 8. Processing laser
-    // ros::NodeHandle nhk;
-    // ros::Subscriber sub = nhk.subscribe<PointCloud>("/laser/point_cloud", 1, process_laser);
-    // ros::Rate loop_rate(50);
-    // loop_rate.sleep();
-    // ros::spinOnce();
-
-    // if (!viewer2.wasStopped()){
-    //       viewer2.showCloud (m_cloud_color_UPD);
-    // }
-    
-    // 7. Publish the UPD classified point clouds
-    ros::NodeHandle nh;
-    ros::Publisher pub = nh.advertise<PointCloud> ("upd_point_cloud_classification", 1);
-    // printf("Info: 4. UPD published pointCloud \n");
-    pub.publish (m_cloud_color_UPD);
-
-    sensor_msgs::PointCloud2 msgcloud;
-    pcl::toROSMsg(*m_cloud_color_UPD.get(), msgcloud); 
-
-    ros::NodeHandle nh2;
-    std::string tf_frame;
-    tf_frame = "/base_link";
-    nh2.param("frame_id", tf_frame, std::string("/base_link"));
-    msgcloud.header.frame_id = tf_frame;
-    msgcloud.header.stamp = ros::Time::now();
-    ros::Publisher pub2 = nh2.advertise<sensor_msgs::PointCloud2> ("upd_point_cloud_classification_rviz", 1);
-    // printf("Info: 4. UPD published msgCloud \n");
-    pub2.publish (msgcloud);
-
-    ros::spinOnce();
-
-}
 
 int main(int argc, char** argv){
     
@@ -518,76 +388,17 @@ int main(int argc, char** argv){
     printf("UPD_VOX_GRID_LEAF_Y = %s \n", getenv("UPD_VOX_GRID_LEAF_Y"));
     printf("UPD_VOX_GRID_LEAF_Z = %s \n", getenv("UPD_VOX_GRID_LEAF_Z"));
     printf("UPD_REDUCTION_PERCENT = %s \n", getenv("UPD_REDUCTION_PERCENT"));
+    printf("ROS_UPD_LOOP_RATE = %s \n", getenv("ROS_UPD_LOOP_RATE"));
     printf("=================================================== \n");
 
     // 1. ROS Init
     printf("Info: 1. ROS Init \n");
     ros::init (argc, argv, "upd_node");
 
-    // 2. Subscriber OpenNI
-    printf("Info: 2. Subscriber OpenNI \n");
-    ros::NodeHandle nhk;
+    // 2. Publishing UPD data 
+    printf("Info: 2. Publishing UPD data \n");
+    UPDProcess updProcess;
 
-    // 3. Publishing UPD data 
-    printf("Info: 3. Publishing UPD data \n");
-    ros::Subscriber sub = nhk.subscribe<PointCloud>("/camera/depth/points", 1, process_upd);
-    ros::Rate loop_rate(1000);
-    loop_rate.sleep();
+    // 3. Spin ROS cycle
     ros::spin();
 }
-
-// class UPD_Publisher{
-//     public:
-//         static const rosNode nh;
-//         static const rosPublisher pub;
-//         static const rosNode nhk;
-//         static const rosSubscriber sub;
-//         // UPD_Publisher(){
-//         //     // 1. Setup UPD publisher that will provide classified points
-//         //     pub = nh.advertise<PointCloud> ("upd_point_cloud_classification", 1);
-
-//         //     // 2. Setup subscriber for Kinect Point Cloud data and run the callback process
-//         //     sub = nhk.subscribe<PointCloud>("/camera/depth/points", 1, process);
-
-//         //     // 3. ROS run
-//         //     ros::Rate loop_rate(4);
-//         //     ros::spin();
-
-//         // }
-//         static void process(const PointCloud::ConstPtr& msg){
-//             // cout << "publisher callback processing.....";
-//             printf ("Cloud: width = %d, height = %d\n", msg->width, msg->height);
-//             BOOST_FOREACH (const pcl::PointXYZ& pt, msg->points)
-//             printf ("\t(%f, %f, %f)\n", pt.x, pt.y, pt.z);
-
-//             // 1. Publish the UPD data
-//             //pub.publish (msg);
-//         };
-
-//         static void start(){
-
-//             // 1. Setup UPD publisher that will provide classified points
-//             pub = nh.advertise<PointCloud> ("upd_point_cloud_classification", 1);
-
-//             // 2. Setup subscriber for Kinect Point Cloud data and run the callback process
-//             sub = nhk.subscribe<PointCloud>("/camera/depth/points", 1, process);
-
-//             // 3. ROS run
-//             ros::Rate loop_rate(4);
-//             ros::spin();
-
-//         }
-
-// };
-
-// int main(int argc, char** argv){
-    
-//     ros::init (argc, argv, "upd_node");
-
-//     UPD_Publisher upd_publisher;
-
-//     upd_publisher.start();    
-
-//     // upd_publisher();
-
-// }

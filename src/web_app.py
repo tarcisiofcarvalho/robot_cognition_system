@@ -29,10 +29,10 @@ class PassageCondition():
     def laser_pan_tilt_set(self):
         pub_laser_pan = rospy.Publisher('/r2d2_laser_pan_controller/command', Float64, queue_size=10)
         pub_laser_tilt = rospy.Publisher('/r2d2_laser_tilt_controller/command', Float64, queue_size=10)
-        rate = rospy.Rate(10) # 10hz
+        rate = rospy.Rate(10000) # 10000hz
         while not rospy.is_shutdown():
-            rospy.loginfo("Pan_rad: " + str(math.radians(self.pan_deg)))
-            rospy.loginfo("Tilt_rad: " + str(math.radians(self.tilt_deg)))
+            # rospy.loginfo("Pan_rad: " + str(math.radians(self.pan_deg)))
+            # rospy.loginfo("Tilt_rad: " + str(math.radians(self.tilt_deg)))
             pub_laser_pan.publish(math.radians(self.pan_deg))
             pub_laser_tilt.publish(math.radians(self.tilt_deg))
             rate.sleep()
@@ -40,14 +40,15 @@ class PassageCondition():
 @app.route('/passage_condition', methods=['GET'])
 def passage_condition_route():
     passage_condition_result = PassageCondition.passage_condition.data
+    print("Passage condition: " + str(passage_condition_result))
     return jsonify({'condition':str(passage_condition_result)})
 
 @app.route('/laser_move', methods=['POST'])
 def pan_move_route():
     PassageCondition.pan_deg = request.json['pan_value']
     PassageCondition.tilt_deg = request.json['tilt_value']
-    print("pan_deg: " + str(request.json['pan_value']))
-    print("tilt_deg: " + str(request.json['tilt_value']))
+    # print("pan_deg: " + str(request.json['pan_value']))
+    # print("tilt_deg: " + str(request.json['tilt_value']))
     return "OK"
 
 @app.route('/', methods=['GET','POST'])

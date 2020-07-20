@@ -11,14 +11,14 @@ var app = new Vue({
 
     methods:{
         getPassageCondition(){
-            // axios
-            // .get('/passage_condition')
-            // .then(
-            //     response => (
-            //         this.passage_condition = response.data.condition,
-            //         console.log(response.data.condition)
-            //     )
-            // )
+            axios
+            .get('/passage_condition')
+            .then(
+                response => (
+                    this.passage_condition = response.data.condition,
+                    console.log(response.data.condition)
+                )
+            )
         },
 
         process_laser(){
