@@ -27,8 +27,7 @@
     args="r2d2_joint_state_controller
           r2d2_diff_drive_controller
           r2d2_laser_tilt_controller
-          r2d2_laser_pan_controller
-          --shutdown-timeout 3"/>
+          r2d2_laser_pan_controller"/>
 
   <node name="joint_state_publisher"
         pkg="joint_state_publisher"

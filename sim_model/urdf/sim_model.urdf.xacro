@@ -344,7 +344,7 @@
     </sensor>
   </gazebo>
 
-  <joint name="hokuyo_joint" type="revolute">
+  <joint name="hokuyo_joint" type="continuous">
     <axis xyz="0 1 0" />
     <!-- <origin xyz="0 0 ${height3 - axel_offset/2}" rpy="0 0 0"/> -->
     <limit lower="-${3.15/2}" upper="${3.15/2}"  effort="50" velocity="1"/>
@@ -353,7 +353,7 @@
     <child link="hokuyo_link"/>
   </joint>
 
-  <joint name="hokuyo_joint_pan" type="revolute">
+  <joint name="hokuyo_joint_pan" type="continuous">
     <axis xyz="0 0 1" />
     <!-- <origin xyz="0 0 ${height3 - axel_offset/2}" rpy="0 0 0"/> -->
     <limit lower="-${3.15/2}" upper="${3.15/2}"  effort="50" velocity="1"/>
@@ -396,8 +396,9 @@
       </geometry>
     </collision>
     <inertial>
-      <mass value="0.001"/>
-      <inertia ixx="0.0001" ixy="0.0" ixz="0.0" iyy="0.0001" iyz="0.0" izz="0.0001"/>
+      <mass value="1e-5" />
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <inertia ixx="1e-6" ixy="0" ixz="0" iyy="1e-6" iyz="0" izz="1e-6" />
     </inertial>      
   </link>
 

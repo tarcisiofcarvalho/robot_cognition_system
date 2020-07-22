@@ -5,9 +5,12 @@
 #include <pcl_ros/point_cloud.h>
 #include <pcl/point_types.h>
 #include <pcl/common/io.h>
+#include <pcl/io/pcd_io.h>
 #include <pcl/common/transforms.h>
+#include <pcl/filters/voxel_grid.h>
 #include <pcl/io/pcd_io.h>
 #include <pcl/point_cloud.h>
+#include <pcl/compression/octree_pointcloud_compression.h>
 #include <pcl_conversions/pcl_conversions.h>
 #include <pcl/visualization/cloud_viewer.h>
 #include <pcl/kdtree/kdtree_flann.h>
@@ -20,11 +23,13 @@
 #include <fstream>
 #include <vector>
 #include <ctime>
+#include <limits>
 using namespace std;
 
 // Constant definitions
 #define _USE_MATH_DEFINES
 #define PI 3.14159265
+typedef std::numeric_limits< double > dbl;
 
 // Common Point Cloud type used in this processing
 typedef pcl::PointCloud<pcl::PointXYZRGBA> PointCloud;
@@ -58,8 +63,6 @@ class PassageClassificationProcess{
         * that will request the passage classification next
         */
         void upd_callback(const PointCloud::ConstPtr& msg){
-        
-          PassageClassificationProcess::upd_data_ready = false;
 
           PassageClassificationProcess::upd_data = boost::const_pointer_cast<PointCloud>(msg);
 
@@ -75,10 +78,11 @@ class PassageClassificationProcess{
         void laser_data_callback(const PointCloud::ConstPtr& msg){
 
             // 0. Reset laser data processing status
-            PassageClassificationProcess::laser_data_ready = false;
+            // PassageClassificationProcess::laser_data_ready = false;
 
+            printf("***** Laser Run - start ******\n");
             // 1. Casting the laser point cloud object
-            PointCloud::Ptr laser_data = boost::const_pointer_cast<PointCloud>(msg);
+            PointCloud::Ptr laser_data_raw = boost::const_pointer_cast<PointCloud>(msg);
 
             // 2. Translation matrix definition for laser 
             // point frame to kinect frame
@@ -104,7 +108,7 @@ class PassageClassificationProcess{
             translationMatrix(3,2) = 0;
             translationMatrix(3,3) = 1;
           
-            pcl::transformPointCloud(*laser_data, *laser_data, translationMatrix);
+            pcl::transformPointCloud(*laser_data_raw, *laser_data_raw, translationMatrix);
 
             // 4. Rotation matrix definition for laser pan & tilt
             Eigen::Matrix<float, 4, 4> tiltRotationMatrix;
@@ -135,7 +139,7 @@ class PassageClassificationProcess{
             tiltRotationMatrix(3,3) = 1;
 
             // Tilt Transformation
-            pcl::transformPointCloud(*laser_data, *laser_data, tiltRotationMatrix);
+            pcl::transformPointCloud(*laser_data_raw, *laser_data_raw, tiltRotationMatrix);
             
             // Y (Pan)
             Eigen::Matrix<float, 4, 4> panRotationMatrix;
@@ -161,28 +165,71 @@ class PassageClassificationProcess{
             panRotationMatrix(3,3) = 1;
 
             // Pan Transformation
-            pcl::transformPointCloud(*laser_data, *laser_data, panRotationMatrix);
+            pcl::transformPointCloud(*laser_data_raw, *laser_data_raw, panRotationMatrix);
 
-            PassageClassificationProcess::laser_data = laser_data;
+            // // 3. Appling filters
+            // bool showStatistics = false;
+ 
+            // // 3.1 Compression definition
+            // pcl::io::compression_Profiles_e compressionProfile = pcl::io::MED_RES_ONLINE_COMPRESSION_WITH_COLOR;
+
+            // // 3.2 Encoder and Decoder definition
+            // pcl::io::OctreePointCloudCompression<pcl::PointXYZRGBA>* PointCloudEncoder;
+            // pcl::io::OctreePointCloudCompression<pcl::PointXYZRGBA>* PointCloudDecoder;
+            // PointCloudEncoder = new pcl::io::OctreePointCloudCompression<pcl::PointXYZRGBA> (compressionProfile, showStatistics);
+            // PointCloudDecoder = new pcl::io::OctreePointCloudCompression<pcl::PointXYZRGBA> ();    
+
+            // // 3.3 Removing NAN data
+            // PointCloud::Ptr outputCloud (new PointCloud);
+            // PointCloud::Ptr cloudOut (new PointCloud);
+            // std::vector<int> indices;
+            // pcl::removeNaNFromPointCloud(*laser_data_raw,*outputCloud, indices);
+
+            // // 3.4 Defining compress data
+            // std::stringstream compressedData;
+
+            // // 3.5 Compress the point cloud
+            // PointCloudEncoder->encodePointCloud (outputCloud, compressedData);
+
+            // // 3.5 Decompress the point cloud
+            // PointCloudDecoder->decodePointCloud (compressedData, cloudOut);
+
+            // delete PointCloudEncoder;
+            // delete PointCloudDecoder;
+
+            // 3.6 Vox grid reduction
+            pcl::VoxelGrid<pcl::PointXYZRGBA> sor; 
+            sor.setInputCloud (laser_data_raw);
+            sor.setLeafSize (std::stof(getenv("VOX_GRID_LEAF_X")), std::stof(getenv("VOX_GRID_LEAF_Y")), std::stof(getenv("VOX_GRID_LEAF_Z")));
+            PointCloud::Ptr laser_data_filtered (new PointCloud);
+            sor.filter (*laser_data_filtered);
+
+            PassageClassificationProcess::laser_data = laser_data_filtered;
             
             // Set laser data process to ready
             PassageClassificationProcess::laser_data_ready = true;
 
-            // 4. Include laser data into kinect UPD processed data
-            if(PassageClassificationProcess::upd_data_ready){
-                pcl::PointXYZRGBA point2;
-                pcl::PointCloud<pcl::PointXYZRGBA>::iterator it2;
+            cout.precision(dbl::max_digits10);
+            cout << "Pan: " << pan << endl;
+            cout << "Tilt: " << tilt << endl;
+            printf("***** Laser Run - finish ******\n");
 
-                for( it2= laser_data->begin(); it2!= laser_data->end(); it2++){
-                    point2.x = it2->z;
-                    point2.y = it2->y;
-                    point2.z = -it2->x;
-                    point2.r = 0;
-                    point2.g = 0;
-                    point2.b = 254;
-                    point2.a = 255;
-                    PassageClassificationProcess::upd_data->push_back(point2);
-                }
+            // 4. Include laser data into kinect UPD processed data
+            if( PassageClassificationProcess::upd_data_ready==true){
+                // PointCloud::Ptr upd_temp = PassageClassificationProcess::upd_data;
+                // pcl::PointXYZRGBA point2;
+                // pcl::PointCloud<pcl::PointXYZRGBA>::iterator it2;
+
+                // for( it2= laser_data_filtered->begin(); it2!= laser_data_filtered->end(); it2++){
+                //     point2.x = it2->z;
+                //     point2.y = it2->y;
+                //     point2.z = -it2->x;
+                //     point2.r = 0;
+                //     point2.g = 0;
+                //     point2.b = 254;
+                //     point2.a = 255;
+                //     upd_temp->push_back(point2);
+                // }
 
                 if (!viewer2.wasStopped()){
                     viewer2.showCloud (PassageClassificationProcess::upd_data);
@@ -216,6 +263,7 @@ class PassageClassificationProcess{
 
             // Good point for passage condition counter
             float greenCount = 0;
+            float notGreenCount = 0;
             float total = 0;
 
             // 4. Search the points
@@ -235,13 +283,15 @@ class PassageClassificationProcess{
 
               if ( kdtree.nearestKSearch (searchPoint, K, pointIdxNKNSearch, pointNKNSquaredDistance) > 0 )
               {
-                total += pointIdxNKNSearch.size ();
-                for (size_t i = 0; i < pointIdxNKNSearch.size (); ++i)
+                
+                for (size_t i = 0; i < pointIdxNKNSearch.size (); ++i){
+                  
+                  total++;
 
                   if(cloud->points[ pointIdxNKNSearch[i]].g==255){
                     greenCount++;
                   }
-
+                }
               }
 
             }
@@ -251,17 +301,24 @@ class PassageClassificationProcess{
 
             if((greenCount / total) >= std::stof (getenv("MINIMUM_GREEN_POINTS"))){
               msg.data = "safe";
-              printf("safe \n");
+              cout.precision(dbl::max_digits10);
+              cout << "safe total: " << total << endl;
+              cout << "safe greenCount: " << greenCount << endl;
+              
 
             }else{
               msg.data = "unsafe";
-              printf("unsafe \n");
+              cout.precision(dbl::max_digits10);
+              cout << "unsafe total: " << total << endl;
+              cout << "unsafe greenCount: " << greenCount << endl;
+              
             }
 
             // 6. Publish the passage condition
            pub_passage_condition_.publish (msg);
 
            printf("classify_passage_condition \n");
+           printf("***** Finished ******* \n");
         }
 
 
