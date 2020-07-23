@@ -77,6 +77,7 @@ class PassageClassificationProcess{
         */
         void laser_data_callback(const PointCloud::ConstPtr& msg){
 
+
             // 0. Reset laser data processing status
             // PassageClassificationProcess::laser_data_ready = false;
 
@@ -167,35 +168,6 @@ class PassageClassificationProcess{
             // Pan Transformation
             pcl::transformPointCloud(*laser_data_raw, *laser_data_raw, panRotationMatrix);
 
-            // // 3. Appling filters
-            // bool showStatistics = false;
- 
-            // // 3.1 Compression definition
-            // pcl::io::compression_Profiles_e compressionProfile = pcl::io::MED_RES_ONLINE_COMPRESSION_WITH_COLOR;
-
-            // // 3.2 Encoder and Decoder definition
-            // pcl::io::OctreePointCloudCompression<pcl::PointXYZRGBA>* PointCloudEncoder;
-            // pcl::io::OctreePointCloudCompression<pcl::PointXYZRGBA>* PointCloudDecoder;
-            // PointCloudEncoder = new pcl::io::OctreePointCloudCompression<pcl::PointXYZRGBA> (compressionProfile, showStatistics);
-            // PointCloudDecoder = new pcl::io::OctreePointCloudCompression<pcl::PointXYZRGBA> ();    
-
-            // // 3.3 Removing NAN data
-            // PointCloud::Ptr outputCloud (new PointCloud);
-            // PointCloud::Ptr cloudOut (new PointCloud);
-            // std::vector<int> indices;
-            // pcl::removeNaNFromPointCloud(*laser_data_raw,*outputCloud, indices);
-
-            // // 3.4 Defining compress data
-            // std::stringstream compressedData;
-
-            // // 3.5 Compress the point cloud
-            // PointCloudEncoder->encodePointCloud (outputCloud, compressedData);
-
-            // // 3.5 Decompress the point cloud
-            // PointCloudDecoder->decodePointCloud (compressedData, cloudOut);
-
-            // delete PointCloudEncoder;
-            // delete PointCloudDecoder;
 
             // 3.6 Vox grid reduction
             pcl::VoxelGrid<pcl::PointXYZRGBA> sor; 
@@ -215,26 +187,26 @@ class PassageClassificationProcess{
             printf("***** Laser Run - finish ******\n");
 
             // 4. Include laser data into kinect UPD processed data
-            if( PassageClassificationProcess::upd_data_ready==true){
-                // PointCloud::Ptr upd_temp = PassageClassificationProcess::upd_data;
-                // pcl::PointXYZRGBA point2;
-                // pcl::PointCloud<pcl::PointXYZRGBA>::iterator it2;
+            // if( PassageClassificationProcess::upd_data_ready==true){
+            //     // PointCloud::Ptr upd_temp = PassageClassificationProcess::upd_data;
+            //     // pcl::PointXYZRGBA point2;
+            //     // pcl::PointCloud<pcl::PointXYZRGBA>::iterator it2;
 
-                // for( it2= laser_data_filtered->begin(); it2!= laser_data_filtered->end(); it2++){
-                //     point2.x = it2->z;
-                //     point2.y = it2->y;
-                //     point2.z = -it2->x;
-                //     point2.r = 0;
-                //     point2.g = 0;
-                //     point2.b = 254;
-                //     point2.a = 255;
-                //     upd_temp->push_back(point2);
-                // }
+            //     // for( it2= laser_data_filtered->begin(); it2!= laser_data_filtered->end(); it2++){
+            //     //     point2.x = it2->z;
+            //     //     point2.y = it2->y;
+            //     //     point2.z = -it2->x;
+            //     //     point2.r = 0;
+            //     //     point2.g = 0;
+            //     //     point2.b = 254;
+            //     //     point2.a = 255;
+            //     //     upd_temp->push_back(point2);
+            //     // }
 
-                if (!viewer2.wasStopped()){
-                    viewer2.showCloud (PassageClassificationProcess::upd_data);
-                }
-            }
+            //     if (!viewer2.wasStopped()){
+            //         viewer2.showCloud (PassageClassificationProcess::upd_data);
+            //     }
+            // }
             printf("laser_callback \n");
 
         }

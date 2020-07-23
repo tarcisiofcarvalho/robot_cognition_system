@@ -25,6 +25,7 @@ using namespace std;
 // PCL Cloud type definition
 typedef pcl::PointCloud<pcl::PointXYZRGBA> PointCloud;
 typedef pcl::PointCloud<pcl::PointXYZ> PointCloud2;
+typedef pcl::PointCloud<pcl::PointXYZRGB> PointCloudRGB;
 typedef pcl::PointCloud<pcl::PointSurfel> PointCloudSurfel;
 typedef pcl::PointXYZRGBA PointT;
 
@@ -225,61 +226,6 @@ class UPDProcess{
             // 1. Converting from const to non const boost
             PointCloud::Ptr msg2 = boost::const_pointer_cast<PointCloud>(msg);
 
-            // Rotation
-            Eigen::Matrix4f eRot;
-            Eigen::Quaternionf PCRot;
-            Eigen::Vector3f PCTrans;
-            Eigen::Matrix<float, 4, 4> rotMatrix;
-
-            // Counterclockwise rotation around y axis
-            rotMatrix(0,0) = cos(-PI);
-            rotMatrix(0,1) = 0;
-            rotMatrix(0,2) = sin(-PI);
-            rotMatrix(0,3) = 0;
-
-            rotMatrix(1,0) = 0;
-            rotMatrix(1,1) = 1;
-            rotMatrix(1,2) = 0;
-            rotMatrix(1,3) = 0;
-
-            rotMatrix(2,0) = -sin(-PI);
-            rotMatrix(2,1) = 0;
-            rotMatrix(2,2) = cos(-PI);
-            rotMatrix(2,3) = 0;    
-
-            rotMatrix(3,0) = 0;
-            rotMatrix(3,1) = 0;
-            rotMatrix(3,2) = 0;
-            rotMatrix(3,3) = 1;
-
-            
-            pcl::transformPointCloud(*msg2, *msg2, rotMatrix);
-
-            // Clockwise rotation around z axis
-            rotMatrix(0,0) = cos(-PI);
-            rotMatrix(0,1) = -sin(-PI);
-            rotMatrix(0,2) = 0;
-            rotMatrix(0,3) = 0;
-
-            rotMatrix(1,0) = sin(-PI);
-            rotMatrix(1,1) = cos(-PI);
-            rotMatrix(1,2) = 0;
-            rotMatrix(1,3) = 0;
-
-            rotMatrix(2,0) = 0;
-            rotMatrix(2,1) = 0;
-            rotMatrix(2,2) = 1;
-            rotMatrix(2,3) = 0;    
-
-            rotMatrix(3,0) = 0;
-            rotMatrix(3,1) = 0;
-            rotMatrix(3,2) = 0;
-            rotMatrix(3,3) = 1;
-
-            
-            pcl::transformPointCloud(*msg2, *msg2, rotMatrix);
-
-
             // 2. Defining UPD
             upd *m_upd;
             m_upd = new upd;
@@ -340,24 +286,95 @@ class UPDProcess{
             double unevennessMax = std::stod (getenv("UPD_UNEVENNESS_MAX"));
             double radAngle = (std::stod(getenv("UPD_RAD_ANGL")) * M_PI / 180);
             
-            // 8.2 Get colored map
+            // 8.2 Get UPD colored map
             m_upd->setColorMapType(false);
             m_upd->getAsColorMap(m_cloud_color_UPD,
                                 (unevenness)/unevennessMax,
                                 radAngle);
             
-            // 8. Publish the UPD classified point clouds
-            pub_upd_.publish (m_cloud_color_UPD);
-
             // 9. Publish the UPD classified point clouds to Rviz
-            // sensor_msgs::PointCloud2 msgcloud;
-            // pcl::toROSMsg(*m_cloud_color_UPD.get(), msgcloud); 
-            // std::string tf_frame;
-            // tf_frame = "/base_link";
+            PointCloudRGB::Ptr upd_temp (new PointCloudRGB);
+            pcl::PointXYZRGB point_temp;
+            pcl::PointCloud<pcl::PointXYZRGBA>::iterator it2;
+
+            for( it2= m_cloud_color_UPD->begin(); it2!= m_cloud_color_UPD->end(); it2++){
+                point_temp.x = it2->x;
+                point_temp.y = it2->y;
+                point_temp.z = it2->z;
+                point_temp.r = it2->r;
+                point_temp.g = it2->g;
+                point_temp.b = it2->b;
+                upd_temp->push_back(point_temp);
+            }
+
+            sensor_msgs::PointCloud2 msgcloud;
+            pcl::toROSMsg(*upd_temp, msgcloud); 
+            std::string tf_frame;
+            tf_frame = "camera_depth_optical_frame";
             // nh_.param("frame_id", tf_frame, std::string("/base_link"));
-            // msgcloud.header.frame_id = tf_frame;
-            // msgcloud.header.stamp = ros::Time::now();
-            // pub_upd_rviz_.publish (msgcloud);
+            msgcloud.header.frame_id = tf_frame;
+            msgcloud.header.stamp = ros::Time::now();
+            pub_upd_rviz_.publish (msgcloud);
+
+
+            // 10. Transform/Rotate UPD data
+            // Rotation
+            Eigen::Matrix4f eRot;
+            Eigen::Quaternionf PCRot;
+            Eigen::Vector3f PCTrans;
+            Eigen::Matrix<float, 4, 4> rotMatrix;
+
+            // Counterclockwise rotation around y axis
+            rotMatrix(0,0) = cos(-PI);
+            rotMatrix(0,1) = 0;
+            rotMatrix(0,2) = sin(-PI);
+            rotMatrix(0,3) = 0;
+
+            rotMatrix(1,0) = 0;
+            rotMatrix(1,1) = 1;
+            rotMatrix(1,2) = 0;
+            rotMatrix(1,3) = 0;
+
+            rotMatrix(2,0) = -sin(-PI);
+            rotMatrix(2,1) = 0;
+            rotMatrix(2,2) = cos(-PI);
+            rotMatrix(2,3) = 0;    
+
+            rotMatrix(3,0) = 0;
+            rotMatrix(3,1) = 0;
+            rotMatrix(3,2) = 0;
+            rotMatrix(3,3) = 1;
+
+            
+            pcl::transformPointCloud(*m_cloud_color_UPD, *m_cloud_color_UPD, rotMatrix);
+
+            // Clockwise rotation around z axis
+            rotMatrix(0,0) = cos(-PI);
+            rotMatrix(0,1) = -sin(-PI);
+            rotMatrix(0,2) = 0;
+            rotMatrix(0,3) = 0;
+
+            rotMatrix(1,0) = sin(-PI);
+            rotMatrix(1,1) = cos(-PI);
+            rotMatrix(1,2) = 0;
+            rotMatrix(1,3) = 0;
+
+            rotMatrix(2,0) = 0;
+            rotMatrix(2,1) = 0;
+            rotMatrix(2,2) = 1;
+            rotMatrix(2,3) = 0;    
+
+            rotMatrix(3,0) = 0;
+            rotMatrix(3,1) = 0;
+            rotMatrix(3,2) = 0;
+            rotMatrix(3,3) = 1;
+
+            
+            pcl::transformPointCloud(*m_cloud_color_UPD, *m_cloud_color_UPD, rotMatrix);
+
+            
+            // 11. Publish the UPD classified point clouds
+            pub_upd_.publish (m_cloud_color_UPD);
 
             delete m_upd;
 
