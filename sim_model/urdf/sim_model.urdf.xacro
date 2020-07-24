@@ -347,7 +347,7 @@
   <joint name="hokuyo_joint" type="continuous">
     <axis xyz="0 1 0" />
     <!-- <origin xyz="0 0 ${height3 - axel_offset/2}" rpy="0 0 0"/> -->
-    <limit lower="-${3.15/2}" upper="${3.15/2}"  effort="50" velocity="1"/>
+    <limit lower="-${3.1}" upper="${3.1}"  effort="50" velocity="1"/>
     <origin xyz="0.0 0.0 0.0" rpy="0 0 0"/>
     <parent link="hokuyo_base_link"/>
     <child link="hokuyo_link"/>
@@ -357,7 +357,7 @@
     <axis xyz="0 0 1" />
     <!-- <origin xyz="0 0 ${height3 - axel_offset/2}" rpy="0 0 0"/> -->
     <limit lower="-${3.15/2}" upper="${3.15/2}"  effort="50" velocity="1"/>
-    <origin xyz="0.50 0.0 0.15" rpy="0 0 0"/>
+    <origin xyz="0.50 -0.20 0.15" rpy="0 0 0"/>
     <parent link="base_link"/>
     <child link="hokuyo_base_link"/>
   </joint>  

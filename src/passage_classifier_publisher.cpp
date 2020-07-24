@@ -35,7 +35,7 @@ typedef std::numeric_limits< double > dbl;
 typedef pcl::PointCloud<pcl::PointXYZRGBA> PointCloud;
 
 
-pcl::visualization::CloudViewer viewer2 ("Show Points");
+// pcl::visualization::CloudViewer viewer2 ("Show Points");
 
 class PassageClassificationProcess{
     public:

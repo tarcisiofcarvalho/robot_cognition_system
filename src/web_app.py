@@ -29,7 +29,7 @@ class PassageCondition():
     def laser_pan_tilt_set(self):
         pub_laser_pan = rospy.Publisher('/r2d2_laser_pan_controller/command', Float64, queue_size=10)
         pub_laser_tilt = rospy.Publisher('/r2d2_laser_tilt_controller/command', Float64, queue_size=10)
-        rate = rospy.Rate(50) # 10000hz
+        rate = rospy.Rate(100) # 10000hz
         while not rospy.is_shutdown():
             # rospy.loginfo("Pan_rad: " + str(math.radians(self.pan_deg)))
             # rospy.loginfo("Tilt_rad: " + str(math.radians(self.tilt_deg)))
