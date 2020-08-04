@@ -4,7 +4,7 @@ clear
 
 # Variables
 export POINT_CLOUD_API="/camera/depth/points"
-export UPD_UNEVENNESS="4"
+export UPD_UNEVENNESS="8"
 export UPD_UNEVENNESS_MAX="10"
 export UPD_RAD_ANGL="15"
 export UPD_SEARCH_RADIUS="0.7"
