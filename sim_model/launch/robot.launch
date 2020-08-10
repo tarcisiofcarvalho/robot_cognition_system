@@ -6,7 +6,21 @@
     <arg name="model" value="$(arg model)" />
   </include>
 
+  <include file="$(find robot_cognition_system)/sim_model/launch/includes/gmapping.launch.xml"/>
+
   <node name="rviz" pkg="rviz" type="rviz" args="-d $(arg rvizconfig)" />
+
+  <!-- Node to convert Depth sensor point cloud data to laser range data-->
+  <node pkg="nodelet" type="nodelet" name="laserscan_nodelet_manager" args="manager"/> 
+  <node pkg="nodelet" type="nodelet" name="depthimage_to_laserscan" 
+        args="load depthimage_to_laserscan/DepthImageToLaserScanNodelet laserscan_nodelet_manager"> 
+    <param name="scan_height" value="10"/> 
+    <param name="output_frame_id" value="/camera_depth_frame"/> 
+    <param name="range_min" value="0.45"/> 
+    <remap from="image" to="/camera/depth/image_raw"/> 
+    <remap from="scan" to="/scan"/> 
+  </node> 
+
 
   <rosparam command="load"
             file="$(find robot_cognition_system)/sim_model/config/joints.yaml"
