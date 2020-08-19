@@ -31,6 +31,9 @@
     <arg name="initial_pose_a" value="$(arg initial_pose_a)"/>
   </include>
 
+  <!-- Move base -->
+  <include file="$(find robot_cognition_system)/sim_model/launch/includes/move_base.launch.xml"/>
+
   <rosparam command="load"
             file="$(find robot_cognition_system)/sim_model/config/joints.yaml"
             ns="r2d2_joint_state_controller" />

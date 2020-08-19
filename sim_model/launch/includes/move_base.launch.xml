@@ -1,0 +1,17 @@
+<launch>
+
+  <arg name="odom_topic" default="odom" /> 
+
+  <node pkg="move_base" type="move_base" respawn="false" name="move_base" output="screen">
+    <rosparam file="$(find robot_cognition_system)/sim_model/config/costmap_common_params.yaml" command="load" ns="global_costmap" />
+    <rosparam file="$(find robot_cognition_system)/sim_model/config/costmap_common_params.yaml" command="load" ns="local_costmap" />
+    <rosparam file="$(find robot_cognition_system)/sim_model/config/local_costmap_params.yaml" command="load" />
+    <rosparam file="$(find robot_cognition_system)/sim_model/config/global_costmap_params.yaml" command="load" />
+    <rosparam file="$(find robot_cognition_system)/sim_model/config/base_local_planner_params.yaml" command="load" />
+    <rosparam file="$(find robot_cognition_system)/sim_model/config/dwa_local_planner_params.yaml" command="load" />
+    <rosparam file="$(find robot_cognition_system)/sim_model/config/move_base_params.yaml" command="load" />
+
+    <remap from="cmd_vel" to="/r2d2_diff_drive_controller/cmd_vel"/>
+    <remap from="odom" to="/r2d2_diff_drive_controller/odom"/>
+  </node>
+</launch>
