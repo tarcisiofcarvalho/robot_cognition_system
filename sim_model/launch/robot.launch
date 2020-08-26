@@ -1,5 +1,6 @@
 <launch>
   <arg name="model" default="$(find robot_cognition_system)/sim_model/urdf/sim_model.urdf.xacro"/>
+  <!-- <arg name="model" default="$(find robot_cognition_system)/sim_model/urdf/sim_caster.urdf.xacro"/> -->
   <arg name="rvizconfig" default="$(find robot_cognition_system)/sim_model/rviz/urdf.rviz" />
 
   <include file="$(find robot_cognition_system)/sim_model/launch/gazebo.launch">

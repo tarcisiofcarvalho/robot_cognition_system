@@ -1,5 +1,45 @@
 <?xml version="1.0"?>
+<!-- The castor wheel functionality - Credits for the Toronto Robotics Clud
+  https://github.com/Toronto-Robotics-club/Gazebo_caster_sample/blob/master/jimmy_description/urdf/jimmy.xacro
+ -->
+ 
 <robot name="macroed" xmlns:xacro="http://ros.org/wiki/xacro">
+
+  <xacro:property name="pi" value="3.1415926535897931" />
+
+  <!--base link values-->
+  <xacro:property name="base_link_length_width_height" value="0.650 0.381 0.132" />
+  <xacro:property name="base_link_length" value="1" /> 
+  <xacro:property name="base_link_width" value="0.7" />
+  <xacro:property name="base_link_height" value="0.2" />
+  <xacro:property name="base_link_mass" value="20"/> <!--25 kg-->
+
+  <!--left and right castor mount plate size (both are same size)-->
+  <xacro:property name="castor_mount_link_length_width_height" value="0.1145 0.10 0.0057" />
+  <xacro:property name="castor_mount_link_length" value="0.1145" />
+  <xacro:property name="castor_mount_link_width" value="0.10" />
+  <xacro:property name="castor_mount_link_height" value="0.0057" />
+  <xacro:property name="castor_mount_link_mass" value="0.25"/> <!--0.25 kg-->
+
+  <!--dummy link to give castors rotation about the Z axis-->
+  <xacro:property name="castor_mount_dummy_link_length" value="0.02" />
+  <xacro:property name="castor_mount_dummy_link_width" value="0.02" />
+  <xacro:property name="castor_mount_dummy_link_height" value="0.02" />
+  <xacro:property name="castor_mount_dummy_link_mass" value="1.5"/> <!--0.25 kg-->
+
+  <!--Friction for joints-->
+  <xacro:property name="friction_val" value="0.15"/>
+
+  <!--Other properties-->
+  <xacro:property name="rear_wheel_radius" value="0.15" />
+  <xacro:property name="front_wheel_radius" value="0.10" />
+  <xacro:property name="rear_wheel_length" value="0.1" />
+  <xacro:property name="front_wheel_length" value="0.1" />
+  <xacro:property name="rear_wheel_mass" value="8" />
+  <xacro:property name="front_wheel_mass" value="5" />  
+  <xacro:property name="base_z" value="0" />
+  <xacro:property name="joint_friction" value="0.15" />
+  <xacro:property name="joint_castor_friction" value="0.15" />
 
 <!-- Material colors definition -->
   <material name="white">
@@ -8,13 +48,6 @@
   <material name="black">
     <color rgba="0 0 0 1"/>
   </material>
-
-<!-- Properties definitions -->
-  <xacro:property name="rear_wheel_radius" value="0.15" />
-  <xacro:property name="front_wheel_radius" value="0.10" />
-  <xacro:property name="base_z" value="0" />
-  <!-- <xacro:property name="base_z" value="0.32" /> -->
-  
 
 <!-- Defining the robot base -->
   <link name="base_link">
@@ -31,10 +64,19 @@
       </geometry>
     </collision>
     <inertial>
-      <mass value="10"/>
-      <inertia ixx="1.0" ixy="0.0" ixz="0.0" iyy="1.0" iyz="0.0" izz="1.0"/>
+      <mass value="${base_link_mass}"/>
+      <!--This is the 3x3 inertial matrix. See: https://wiki.ros.org/urdf/XML/link -->
+      <!--where x=length; y=width; z=height. these lines of code came from Emiliano Borghi's project-->      
+      <inertia
+        ixx="${base_link_mass*(base_link_width*base_link_width+base_link_height*base_link_height)/12}" 
+        ixy="0" 
+        ixz="0"
+        iyy="${base_link_mass*(base_link_length*base_link_length+base_link_height*base_link_height)/12}" 
+        iyz="0"
+        izz="${base_link_mass*(base_link_length*base_link_length+base_link_height*base_link_height)/12}"/>      
     </inertial>    
   </link>
+
 
 <!-- Defining the robot base back -->
   <link name="base_back">
@@ -61,27 +103,40 @@
     <child link="base_back"/>
     <origin xyz="-0.40 0 0.50"/>
   </joint> 
+
 <!-- Defining the robot rear wheels -->
-  <xacro:macro name="rear_wheel" params="prefix suffix reflect">
+  <xacro:macro name="rear_wheel" params="prefix suffix reflect mass radius length">
 
     <link name="${prefix}_${suffix}_wheel">
       <visual>
         <origin xyz="0 0 ${base_z}" rpy="${pi/2} 0 0" />
         <geometry>
-          <cylinder radius="${rear_wheel_radius}" length="0.1"/>
+          <cylinder radius="${radius}" length="${length}"/>
         </geometry>
         <material name="black"/>
       </visual>
       <collision>
         <geometry>
-          <cylinder radius="${rear_wheel_radius}" length="0.1"/>
+          <cylinder radius="${radius}" length="${length}"/>
         </geometry>
         <origin xyz="0 0 ${base_z}" rpy="${pi/2} 0 0" />
       </collision>
       <inertial>
+        <mass value="${mass}"/>  
+        <!--This is the 3x3 inertial matrix. See: https://wiki.ros.org/urdf/XML/link -->
+        <inertia
+            ixx="${mass*(3*radius*radius+length*length)/12}" 
+            ixy = "0" 
+            ixz = "0"
+            iyy="${mass*(3*radius*radius+length*length)/12}" 
+            iyz = "0"
+            izz="${mass*radius*radius/2}"
+          />
+      </inertial>
+      <!-- <inertial>
         <mass value="10"/>
         <inertia ixx="1.0" ixy="0.0" ixz="0.0" iyy="1.0" iyz="0.0" izz="1.0"/>
-      </inertial>
+      </inertial> -->
       <!-- <xacro:default_inertial mass="1"/> -->
     </link>
     
@@ -90,6 +145,7 @@
       <parent link="base_link"/>
       <child link="${prefix}_${suffix}_wheel"/>
       <origin xyz="${-0.35} ${reflect*0.4} ${-0.17}"/>
+      <dynamics damping="0.0" friction="${joint_friction}"/> 
       <!-- <origin xyz="${baselen*reflect/3} 0 -${wheeldiam/2+.05}" rpy="0 0 0"/> -->
     </joint>
     <!-- This block provides the simulator (Gazebo) with information on a few additional
@@ -116,34 +172,42 @@
   </xacro:macro>
 
 <!-- Defining the robot front wheels -->
-
-  <xacro:macro name="front_wheel" params="prefix suffix reflect">
+  <xacro:macro name="front_wheel" params="prefix suffix reflect mass radius length">
 
     <link name="${prefix}_${suffix}_wheel">
       <visual>
         <origin xyz="0 0 ${base_z}" rpy="${pi/2} 0 0" />
         <geometry>
-          <cylinder radius="${front_wheel_radius}" length="0.1"/>
+          <cylinder radius="${radius}" length="${radius}"/>
         </geometry>
         <material name="black"/>
       </visual>
       <collision>
         <geometry>
-          <cylinder radius="${front_wheel_radius}" length="0.1"/>
+          <cylinder radius="${radius}" length="${radius}"/>
         </geometry>
         <origin xyz="0 0 ${base_z}" rpy="${pi/2} 0 0" />
       </collision>
       <inertial>
-        <mass value="10"/>
-        <inertia ixx="1.0" ixy="0.0" ixz="0.0" iyy="1.0" iyz="0.0" izz="1.0"/>
-      </inertial>
-      <!-- <xacro:default_inertial mass="1"/> -->
+        <mass value="${mass}"/>  
+        <!--This is the 3x3 inertial matrix. See: https://wiki.ros.org/urdf/XML/link -->
+        <inertia
+            ixx="${mass*(3*radius*radius+length*length)/12}" 
+            ixy = "0" 
+            ixz = "0"
+            iyy="${mass*(3*radius*radius+length*length)/12}" 
+            iyz = "0"
+            izz="${mass*radius*radius/2}"
+          />
+      </inertial>      
     </link>
+
     <joint name="${prefix}_${suffix}_wheel_joint" type="continuous">
       <axis xyz="0 1 0" rpy="0 0 0" />
-      <parent link="base_link"/>
+      <parent link="${prefix}_castor_dummy"/>
       <child link="${prefix}_${suffix}_wheel"/>
-      <origin xyz="${0.35} ${reflect*0.35} ${-0.22}"/>
+      <origin xyz="0 0 -0.12"/>
+      <dynamics damping="0.0" friction="${joint_friction}"/> 
       <!-- <origin xyz="${baselen*reflect/3} 0 -${wheeldiam/2+.05}" rpy="0 0 0"/> -->
     </joint>
 
@@ -170,14 +234,123 @@
     </transmission>
   </xacro:macro>
 
+  <!-- Defining the castor mount -->
+  <xacro:macro name="castor_mount" params="prefix reflect length width height material mass">
+    <link name="${prefix}_castor_mount">
+      <collision>
+        <geometry>
+          <box size="${length} ${width} ${height}"/>
+        </geometry>
+        <origin xyz="0 0 ${base_z}" rpy="${pi/2} 0 0" />
+      </collision>
+      <visual>
+        <geometry>
+          <box size="${length} ${width} ${height}"/>
+        </geometry>
+        <origin xyz="0 0 ${base_z}" rpy="0 0 0" />
+        <material name="${material}"/>
+      </visual>
+      <inertial>
+        <origin xyz="0 0 ${base_z}" rpy="0 0 0" />
+        <mass value="${mass}"/>
+        <!--This is the 3x3 inertial matrix. See: https://wiki.ros.org/urdf/XML/link -->
+        <!--where x=length; y=width; z=height. these lines of code came from 
+        Emiliano Borghi's project-->
+        <inertia
+          ixx="${mass*(width*width+height*height)/12}" 
+    	    ixy = "0" 
+    	    ixz = "0"
+    	    iyy="${mass*(length*length+height*height)/12}" 
+    	    iyz = "0"
+    	    izz="${mass*(length*length+height*height)/12}"/>
+      </inertial>      
+      
+    </link>
+    <joint name="${prefix}_castor_mount_joint" type="fixed">
+      <axis xyz="0 1 0" rpy="0 0 0" />
+      <parent link="base_link"/>
+      <child link="${prefix}_castor_mount"/>
+      <origin xyz="${0.35} ${reflect*0.30} ${-0.10}"/>
+      <!-- <origin xyz="${baselen*reflect/3} 0 -${wheeldiam/2+.05}" rpy="0 0 0"/> -->
+    </joint>
+  </xacro:macro>
+
+  <!-- Defining the castor dummy for Z axis rotation -->
+  <xacro:macro name="castor_dummy" params="prefix reflect length width height material mass">
+    <link name="${prefix}_castor_dummy">
+      <collision>
+        <geometry>
+          <box size="${length} ${width} ${height}"/>
+        </geometry>
+        <origin xyz="0 0 ${base_z}" rpy="${pi/2} 0 0" />
+      </collision>
+      <visual>
+        <geometry>
+          <box size="${length} ${width} ${height}"/>
+        </geometry>
+        <origin xyz="0 0 ${base_z}" rpy="0 0 0" />
+        <material name="${material}"/>
+      </visual>
+      <inertial>
+        <origin xyz="0 0 ${base_z}" rpy="0 0 0" />
+        <mass value="${mass}"/>
+        <!--This is the 3x3 inertial matrix. See: https://wiki.ros.org/urdf/XML/link -->
+        <!--where x=length; y=width; z=height. these lines of code came from 
+        Emiliano Borghi's project-->
+        <inertia
+          ixx="${mass*(width*width+height*height)/12}" 
+    	    ixy = "0" 
+    	    ixz = "0"
+    	    iyy="${mass*(length*length+height*height)/12}" 
+    	    iyz = "0"
+    	    izz="${mass*(length*length+height*height)/12}"/>
+      </inertial>      
+      
+    </link>
+    <joint name="${prefix}_castor_dummy_joint" type="continuous">
+      <axis xyz="0 0 1" rpy="0 0 0" />
+      <parent link="${prefix}_castor_mount"/>
+      <child link="${prefix}_castor_dummy"/>
+      <origin xyz="0 0 -0.01"/>
+      <dynamics damping="0.0" friction="${joint_castor_friction}"/> 
+      <!-- <origin xyz="${baselen*reflect/3} 0 -${wheeldiam/2+.05}" rpy="0 0 0"/> -->
+    </joint>
+  </xacro:macro>
+
   <!-- Setting the rear right wheel -->
-  <xacro:rear_wheel prefix="right" suffix="rear" reflect="-1" />
+  <xacro:rear_wheel prefix="right" suffix="rear" reflect="-1" mass="${rear_wheel_mass}" radius="${rear_wheel_radius}" length="${rear_wheel_length}"/>
   <!-- Setting the rear left wheel -->
-  <xacro:rear_wheel prefix="left" suffix="rear" reflect="1" />
+  <xacro:rear_wheel prefix="left" suffix="rear" reflect="1" mass="${rear_wheel_mass}"  radius="${rear_wheel_radius}" length="${rear_wheel_length}"/>
+  <!-- Setting the castor mount left wheel -->
+  <xacro:castor_mount prefix="left" reflect="1" length="${castor_mount_link_length}" 
+                                                width="${castor_mount_link_width}" 
+                                                height="${castor_mount_link_height}" 
+                                                material="white"
+                                                mass="${castor_mount_link_mass}"/>
+  <!-- Setting the castor mount right wheel -->
+  <xacro:castor_mount prefix="right" reflect="-1" length="${castor_mount_link_length}" 
+                                                width="${castor_mount_link_width}" 
+                                                height="${castor_mount_link_height}" 
+                                                material="white"
+                                                mass="${castor_mount_link_mass}"/>                                                
+  <!-- Setting the castor dummy left wheel -->
+  <xacro:castor_dummy prefix="left" reflect="1" length="${castor_mount_dummy_link_length}" 
+                                                width="${castor_mount_dummy_link_width}" 
+                                                height="${castor_mount_dummy_link_height}" 
+                                                material="orange"
+                                                mass="${castor_mount_dummy_link_mass}"/>
+  <!-- Setting the castor dummy left wheel -->
+  <xacro:castor_dummy prefix="right" reflect="-1" length="${castor_mount_dummy_link_length}" 
+                                                width="${castor_mount_dummy_link_width}" 
+                                                height="${castor_mount_dummy_link_height}" 
+                                                material="orange"
+                                                mass="${castor_mount_dummy_link_mass}"/>                                                
+ 
+
   <!-- Setting the front right wheel -->
-  <xacro:front_wheel prefix="right" suffix="front" reflect="-1" />
+  <xacro:front_wheel prefix="right" suffix="front" reflect="-1" mass="${front_wheel_mass}"  radius="${front_wheel_radius}" length="${front_wheel_length}"/>
   <!-- Setting the front left wheel -->
-  <xacro:front_wheel prefix="left" suffix="front" reflect="1" />
+  <xacro:front_wheel prefix="left" suffix="front" reflect="1" mass="${front_wheel_mass}"  radius="${front_wheel_radius}" length="${front_wheel_length}"/>
 
   <!-- Kinect definition -->
   <gazebo reference="camera_depth_frame">
@@ -232,6 +405,7 @@
     <parent link="base_link"/>
     <child link="camera_rgb_frame"/>
   </joint>
+
   <link name="camera_rgb_frame">
     <inertial>
       <mass value="0.001"/>
@@ -245,6 +419,7 @@
     <parent link="camera_rgb_frame"/>
     <child link="camera_rgb_optical_frame"/>
   </joint>
+
   <link name="camera_rgb_optical_frame">
     <inertial>
       <mass value="0.001"/>
@@ -252,11 +427,13 @@
       <inertia ixx="0.0001" ixy="0.0" ixz="0.0" iyy="0.0001" iyz="0.0" izz="0.0001"/>
     </inertial>
   </link>
+
   <joint name="camera_joint" type="fixed">
     <origin rpy="0 0 0" xyz="-0.031 -0.0 -0.016"/>
     <parent link="camera_rgb_frame"/>
     <child link="camera_link"/>
   </joint>
+
   <link name="camera_link">
     <visual>
       <origin rpy="0.0 0 1.57079632679" xyz="0 0 0"/>
@@ -276,6 +453,7 @@
       <inertia ixx="0.0001" ixy="0.0" ixz="0.0" iyy="0.0001" iyz="0.0" izz="0.0001"/>
     </inertial>
   </link>
+
   <!-- The fixed joints & links below are usually published by static_transformers launched by the OpenNi launch 
 		 files. However, for Gazebo simulation we need them, so we add them here.
 		 (Hence, don't publish them additionally!) -->
@@ -284,6 +462,7 @@
     <parent link="camera_rgb_frame"/>
     <child link="camera_depth_frame"/>
   </joint>
+
   <link name="camera_depth_frame">
     <inertial>
       <mass value="0.001"/>
@@ -291,11 +470,13 @@
       <inertia ixx="0.0001" ixy="0.0" ixz="0.0" iyy="0.0001" iyz="0.0" izz="0.0001"/>
     </inertial>
   </link>
+
   <joint name="camera_depth_optical_joint" type="fixed">
     <origin rpy="-1.57079632679 0 -1.57079632679" xyz="0 0 0"/>
     <parent link="camera_depth_frame"/>
     <child link="camera_depth_optical_frame"/>
   </joint>
+
   <link name="camera_depth_optical_frame">
     <inertial>
       <mass value="0.001"/>
@@ -304,9 +485,9 @@
     </inertial>
   </link>
 
-
 <!-- Laser Pointer Definition -->
  <gazebo reference="hokuyo_link">
+
     <sensor type="ray" name="head_hokuyo_sensor">
       <pose>0 0 0 0 0 0</pose>
       <visualize>true</visualize>
@@ -426,7 +607,11 @@
 
 
 
+
+
 <!-- Gazebo plugin for ROS Control -->
+  
+
   <gazebo>
     <plugin name="gazebo_ros_control" filename="libgazebo_ros_control.so">
       <robotNamespace>/</robotNamespace>
