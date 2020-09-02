@@ -5,3 +5,8 @@ global_costmap:
    publish_frequency: 0.5
    static_map: true
    transform_tolerance: 0.5
+   width: 40.0 
+   height: 40.0 
+   origin_x: 0
+   origin_y: 0
+   rolling_window: true

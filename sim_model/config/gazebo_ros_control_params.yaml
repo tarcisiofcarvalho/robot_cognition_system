@@ -1,0 +1,8 @@
+# gazebo_ros_control_params.yaml
+gazebo_ros_control/pid_gains:
+  right_rear_wheel_joint: {p: 1.0, i: 0.0, d: 1.0}
+  left_rear_wheel_joint: {p: 2.0, i: 0.0, d: 1.0}
+  right_front_wheel_joint: {p: 3.0, i: 0.0, d: 1.0}
+  left_front_wheel_joint: {p: 4.0, i: 0.0, d: 1.0}
+  hokuyo_joint: {p: 5.0, i: 0.0, d: 1.0}
+  hokuyo_joint_pan: {p: 6.0, i: 0.0, d: 1.0}

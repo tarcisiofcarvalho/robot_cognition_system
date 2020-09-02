@@ -23,14 +23,14 @@
   </node> 
 
   <!-- Localization -->
-  <arg name="initial_pose_x" default="0.0"/>
+  <!-- <arg name="initial_pose_x" default="0.0"/>
   <arg name="initial_pose_y" default="0.0"/>
   <arg name="initial_pose_a" default="0.0"/>
   <include file="$(find robot_cognition_system)/sim_model/launch/includes/amcl.launch.xml">
     <arg name="initial_pose_x" value="$(arg initial_pose_x)"/>
     <arg name="initial_pose_y" value="$(arg initial_pose_y)"/>
     <arg name="initial_pose_a" value="$(arg initial_pose_a)"/>
-  </include>
+  </include> -->
 
   <!-- Move base -->
   <include file="$(find robot_cognition_system)/sim_model/launch/includes/move_base.launch.xml"/>
@@ -61,6 +61,9 @@
         type="joint_state_publisher">
     <param name="use_gui" value="false"/>
   </node>
+
+  <!-- Gazebo PID for joints-->
+  <!-- <rosparam file="$(find robot_cognition_system)/sim_model/config/gazebo_ros_control_params.yaml" command="load"/> -->
 
   <node name="rqt_robot_steering" pkg="rqt_robot_steering" type="rqt_robot_steering">
     <param name="default_topic" value="/r2d2_diff_drive_controller/cmd_vel"/>

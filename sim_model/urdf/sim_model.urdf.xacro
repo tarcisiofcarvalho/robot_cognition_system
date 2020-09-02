@@ -2,7 +2,7 @@
 <!-- The castor wheel functionality - Credits for the Toronto Robotics Clud
   https://github.com/Toronto-Robotics-club/Gazebo_caster_sample/blob/master/jimmy_description/urdf/jimmy.xacro
  -->
- 
+
 <robot name="macroed" xmlns:xacro="http://ros.org/wiki/xacro">
 
   <xacro:property name="pi" value="3.1415926535897931" />
@@ -76,7 +76,6 @@
         izz="${base_link_mass*(base_link_length*base_link_length+base_link_height*base_link_height)/12}"/>      
     </inertial>    
   </link>
-
 
 <!-- Defining the robot base back -->
   <link name="base_back">
@@ -307,12 +306,12 @@
       </inertial>      
       
     </link>
-    <joint name="${prefix}_castor_dummy_joint" type="continuous">
+    <joint name="${prefix}_castor_dummy_joint" type="fixed">
       <axis xyz="0 0 1" rpy="0 0 0" />
       <parent link="${prefix}_castor_mount"/>
       <child link="${prefix}_castor_dummy"/>
       <origin xyz="0 0 -0.01"/>
-      <dynamics damping="0.0" friction="${joint_castor_friction}"/> 
+      <!-- <dynamics damping="0.0" friction="${joint_castor_friction}"/>  -->
       <!-- <origin xyz="${baselen*reflect/3} 0 -${wheeldiam/2+.05}" rpy="0 0 0"/> -->
     </joint>
   </xacro:macro>
@@ -615,6 +614,8 @@
   <gazebo>
     <plugin name="gazebo_ros_control" filename="libgazebo_ros_control.so">
       <robotNamespace>/</robotNamespace>
+      <robotSimType>gazebo_ros_control/DefaultRobotHWSim</robotSimType>
+      <legacyModeNS>true</legacyModeNS>
     </plugin>
   </gazebo>
 
