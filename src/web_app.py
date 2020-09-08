@@ -5,6 +5,7 @@ from std_msgs.msg import String, Float64
 from flask import Flask, request, jsonify, render_template
 import threading
 import math
+import move_to_target as move_action
 
 passage_condition_result = "test"
 
@@ -44,12 +45,18 @@ def passage_condition_route():
     return jsonify({'condition':str(passage_condition_result)})
 
 @app.route('/laser_move', methods=['POST'])
-def pan_move_route():
+def pan_tilt_move_route():
     PassageCondition.pan_deg = request.json['pan_value']
     PassageCondition.tilt_deg = request.json['tilt_value']
     # print("pan_deg: " + str(request.json['pan_value']))
     # print("tilt_deg: " + str(request.json['tilt_value']))
     return "OK"
+
+
+@app.route('/move', methods=['POST'])
+def move_route():
+    PassageCondition.pan_deg
+    PassageCondition.tilt_deg
 
 @app.route('/', methods=['GET','POST'])
 def index():
