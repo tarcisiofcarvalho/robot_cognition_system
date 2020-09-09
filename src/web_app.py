@@ -6,6 +6,7 @@ from flask import Flask, request, jsonify, render_template
 import threading
 import math
 import move_to_target as move_action
+import time
 
 passage_condition_result = "test"
 
@@ -53,10 +54,19 @@ def pan_tilt_move_route():
     return "OK"
 
 
-@app.route('/move', methods=['POST'])
+@app.route('/base_move', methods=['POST'])
 def move_route():
-    PassageCondition.pan_deg
-    PassageCondition.tilt_deg
+    print(request.json['pan_value'])
+    print(request.json['tilt_value'])
+    time.sleep(2.0)
+    return jsonify({}), 200
+
+@app.route('/base_stop', methods=['POST'])
+def stop_route():
+    print("stop request")
+    time.sleep(2.0)
+    return jsonify({}), 200
+    
 
 @app.route('/', methods=['GET','POST'])
 def index():

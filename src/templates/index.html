@@ -7,6 +7,29 @@
         <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
         <link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">
     </head>
+    <style>
+        .loader {
+          border: 8px solid #f3f3f3;
+          border-radius: 50%;
+          border-top: 8px solid #3498db;
+          width: 40px;
+          height: 40px;
+          -webkit-animation: spin 2s linear infinite; /* Safari */
+          animation: spin 2s linear infinite;
+          margin: auto;
+        }
+        
+        /* Safari */
+        @-webkit-keyframes spin {
+          0% { -webkit-transform: rotate(0deg); }
+          100% { -webkit-transform: rotate(360deg); }
+        }
+        
+        @keyframes spin {
+          0% { transform: rotate(0deg); }
+          100% { transform: rotate(360deg); }
+        }
+    </style>
     <body style="width: 100%;">
         <div class="w3-container w3-center w3-margin">
             <div id="app">
@@ -18,16 +41,34 @@
                 </div> 
                 <div class="w3-container w3-bar w3-center w3-marging">
                     <p>Laser Pan Degree</p>
-                    <button class="w3-button w3-blue w3-circle w3-smal" v-on:click="minus_pan()">-</button>
+                    <button class="w3-button w3-blue w3-circle w3-smal" v-bind:class="{'w3-disabled': moving}" v-on:click="minus_pan()">-</button>
                     <input v-model="laser_pan"/>
-                    <button class="w3-button w3-green w3-circle w3-smal" v-on:click="plus_pan()">+</button>
+                    <button class="w3-button w3-green w3-circle w3-smal" v-bind:class="{'w3-disabled': moving}" v-on:click="plus_pan()">+</button>
                 </div>
                 <div class="w3-container w3-bar w3-center w3-marging">
                     <p>Laser Tilt Degree</p>
-                    <button class="w3-button w3-blue w3-circle w3-smal" v-on:click="minus_tilt()">-</button>
+                    <button class="w3-button w3-blue w3-circle w3-smal" v-bind:class="{'w3-disabled': moving}" v-on:click="minus_tilt()">-</button>
                     <input v-model="laser_tilt"/>
-                    <button class="w3-button w3-green w3-circle w3-smal" v-on:click="plus_tilt()">+</button>
-                </div>                
+                    <button class="w3-button w3-green w3-circle w3-smal" v-bind:class="{'w3-disabled': moving}" v-on:click="plus_tilt()">+</button>
+                </div>
+                <p v-if="passage_condition=='safe' && moving==false && go_achieved==false"><button class="w3-button w3-block w3-green" v-on:click="go();">Click here to Go!</button></p> 
+                <div class="w3-center w3-panel" v-if="moving">
+                    <div class="loader"></div>
+                    <span>Moving...</span>
+                </div>
+                <p v-if="moving"><button class="w3-button w3-block w3-red" v:on:click="go();">Emergency Stop</button></p> 
+                <div class="w3-panel w3-green" v-if="go_achieved">
+                    <h3>Success!</h3>
+                    <p>Target achieved.</p>
+                </div>
+                <div class="w3-panel w3-blue" v-if="stopping">
+                    <h3>Warning!</h3>
+                    <p>Stopping the Wheeledchair...</p>
+                </div>                  
+                <div class="w3-panel w3-blue" v-if="process_interrupted">
+                    <h3>Info!</h3>
+                    <p>Wheeledchair stopped!</p>
+                </div>                 
             </div> 
         </div>     
     </body>

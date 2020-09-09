@@ -74,7 +74,6 @@ def process(pan=None, tilt=None):
         # 2. Set X and Y meters ahead to /move_base/goal node
         result = move(x, y)
 
-        # 3. Monitor requested action completion and publish it’s status
         if result:
             rospy.loginfo("Goal execution done!")
     except rospy.ROSInterruptException:
