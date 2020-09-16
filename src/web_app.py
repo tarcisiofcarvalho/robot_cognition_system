@@ -7,6 +7,7 @@ import threading
 import math
 import move_to_target as move_action
 import time
+from sensor_msgs.msg import LaserScan 
 
 passage_condition_result = "test"
 
@@ -17,16 +18,22 @@ class PassageCondition():
     passage_condition = "test"
     pan_deg = 0
     tilt_deg = 0
+    laser_range = 0
 
     def __init__(self):
         self.subscriber = rospy.Subscriber("/passage_condition", String, self.passage_classification)
+        self.subscriber_laser = rospy.Subscriber("/laser/pointer", LaserScan, self.laser_data)
         self.passage_condition = "test"
         self.laser_pan_tilt_set()
+        
 
     def passage_classification(self, data):
-        # print(data)
         PassageCondition.passage_condition = data
-        # passage_condition = data
+        
+
+    def laser_data(self, data):
+        PassageCondition.laser_range = data
+
 
     def laser_pan_tilt_set(self):
         pub_laser_pan = rospy.Publisher('/r2d2_laser_pan_controller/command', Float64, queue_size=10)
@@ -49,15 +56,14 @@ def passage_condition_route():
 def pan_tilt_move_route():
     PassageCondition.pan_deg = request.json['pan_value']
     PassageCondition.tilt_deg = request.json['tilt_value']
-    # print("pan_deg: " + str(request.json['pan_value']))
-    # print("tilt_deg: " + str(request.json['tilt_value']))
     return "OK"
 
 
 @app.route('/base_move', methods=['POST'])
 def move_route():
-    print(request.json['pan_value'])
-    print(request.json['tilt_value'])
+    move_action.process(pan=math.radians(PassageCondition.pan_deg),
+                        tilt=math.radians(PassageCondition.tilt_deg),
+                        laser_range=PassageCondition.laser_range)
     time.sleep(2.0)
     return jsonify({}), 200
 

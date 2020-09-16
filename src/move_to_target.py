@@ -8,12 +8,23 @@ import actionlib
 # Brings in the .action file and messages used by the move base action
 from move_base_msgs.msg import MoveBaseAction, MoveBaseGoal
 
-def transform_laser_pan_tilt_to_XY_2D_in_meters(pan=None, tilt=None):
+def transform_laser_pan_tilt_to_XY_2D_in_meters(pan=None, tilt=None, range=None):
     """
         This component will transform the laser pan and tilt orientation values
         to a point XY in the 2D plane    
     """
+
+    print("Pan: {0}".format(pan))
+    print("Tilt: {0}".format(tilt))
+    print("Range: {0}".format(range.ranges[0]))
     # https://www.mathworks.com/matlabcentral/answers/427558-how-can-i-create-xyz-coordinant-from-pan-tilt-system-angles
+    # function [x, y, z] = my_sph2cart(pan,tilt,range)
+    #     x = range .* cosd(tilt) .* cosd(pan);
+    #     y = range .* cosd(tilt) .* sind(pan);
+    #     z = range .* sind(tilt);
+    # end
+    
+    
     return 2, -2
 
 def move(x=None, y=None):
@@ -59,7 +70,7 @@ def move(x=None, y=None):
     # Result of executing the action
         return client.get_result()   
 
-def process(pan=None, tilt=None):
+def process(pan=None, tilt=None, laser_range=None):
     """ 
         Execute the main process of the move to target request 
     """
@@ -69,10 +80,12 @@ def process(pan=None, tilt=None):
         # rospy.init_node('movebase_client_py')
         
         # 1. Convert the laser orientation data to X and Y axis point direction
-        x, y = transform_laser_pan_tilt_to_XY_2D_in_meters(pan, tilt)
+        x, y = transform_laser_pan_tilt_to_XY_2D_in_meters(pan=pan, 
+                                                           tilt=tilt, 
+                                                           range=laser_range)
 
         # 2. Set X and Y meters ahead to /move_base/goal node
-        result = move(x, y)
+        #result = move(x, y)
 
         if result:
             rospy.loginfo("Goal execution done!")
