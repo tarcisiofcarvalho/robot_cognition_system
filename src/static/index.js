@@ -7,7 +7,8 @@ var app = new Vue({
         moving: false,
         process_interrupted: false,
         go_achieved: false,
-        stopping: false
+        stopping: false,
+        process_error: false
     },
     created(){
         this.interval = setInterval(() => this.getPassageCondition(),1000);
@@ -71,12 +72,20 @@ var app = new Vue({
             }
             axios
             .post('/base_move',data=body)
-            .then(
-                response => (
-                    console.log(response),
-                    this.go_achieved = true,
-                    this.moving = false
-                )
+            .then(function (response){
+                    if(response.status == 200){
+                        console.log(response);
+                        this.go_achieved = true;
+                        this.moving = false;
+                        this.process_error = false;
+                    }else{
+                        console.log(response);
+                        this.go_achieved = false;
+                        this.moving = false;
+                        this.process_error = true;
+                    }
+                
+                }
             )
         },
         stop(){

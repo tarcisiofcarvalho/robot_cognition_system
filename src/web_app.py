@@ -61,11 +61,12 @@ def pan_tilt_move_route():
 
 @app.route('/base_move', methods=['POST'])
 def move_route():
-    move_action.process(pan=math.radians(PassageCondition.pan_deg),
+    result = move_action.process(pan=math.radians(PassageCondition.pan_deg),
                         tilt=math.radians(PassageCondition.tilt_deg),
                         laser_range=PassageCondition.laser_range)
-    time.sleep(2.0)
-    return jsonify({}), 200
+    if result == True:
+        return jsonify({}), 200
+    return 500
 
 @app.route('/base_stop', methods=['POST'])
 def stop_route():

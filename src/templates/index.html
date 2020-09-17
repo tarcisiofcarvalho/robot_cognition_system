@@ -51,7 +51,7 @@
                     <input v-model="laser_tilt"/>
                     <button class="w3-button w3-green w3-circle w3-smal" v-bind:class="{'w3-disabled': moving}" v-on:click="plus_tilt()">+</button>
                 </div>
-                <p v-if="passage_condition=='safe' && moving==false && go_achieved==false"><button class="w3-button w3-block w3-green" v-on:click="go();">Click here to Go!</button></p> 
+                <p v-if="passage_condition=='safe' && moving==false && go_achieved==false && process_error==false"><button class="w3-button w3-block w3-green" v-on:click="go();">Click here to Go!</button></p> 
                 <div class="w3-center w3-panel" v-if="moving">
                     <div class="loader"></div>
                     <span>Moving...</span>
@@ -68,7 +68,11 @@
                 <div class="w3-panel w3-blue" v-if="process_interrupted">
                     <h3>Info!</h3>
                     <p>Wheeledchair stopped!</p>
-                </div>                 
+                </div>      
+                <div class="w3-panel w3-blue" v-if="process_error">
+                    <h3>Warning!</h3>
+                    <p>Something went wrong!</p>
+                </div>                             
             </div> 
         </div>     
     </body>
