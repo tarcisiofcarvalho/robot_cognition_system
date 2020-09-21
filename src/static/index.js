@@ -72,20 +72,27 @@ var app = new Vue({
             }
             axios
             .post('/base_move',data=body)
-            .then(function (response){
-                    if(response.status == 200){
-                        console.log(response);
-                        this.go_achieved = true;
-                        this.moving = false;
-                        this.process_error = false;
-                    }else{
-                        console.log(response);
-                        this.go_achieved = false;
-                        this.moving = false;
-                        this.process_error = true;
-                    }
+            .then(response => (
+                this.go_achieved = true,
+                this.moving = false,
+                this.process_error = false
+            )
+                // function (response){
+                    
+                //     if(response.status === 200){
+                //         console.log(response.status);
+                //         this.go_achieved = true;
+                //         this.moving = false;
+                //         this.process_error = false;
+                //     }else{
+                //         console.log(response);
+                //         console.log("checkpoint 5 ");
+                //         this.go_achieved = false;
+                //         this.moving = false;
+                //         this.process_error = true;
+                //     }
                 
-                }
+                // }
             )
         },
         stop(){
@@ -96,7 +103,7 @@ var app = new Vue({
                 response => (
                     console.log(response),
                     this.stopping = false,
-                    this.go_achieved = true
+                    this.go_achieved = false
                 )
             )
         }       
