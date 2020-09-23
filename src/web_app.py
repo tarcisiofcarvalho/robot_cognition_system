@@ -71,8 +71,7 @@ def move_route():
 @app.route('/base_stop', methods=['POST'])
 def stop_route():
     print("stop request")
-    time.sleep(2.0)
-    return jsonify({}), 200
+    return jsonify({}), move_action.stop()
     
 
 @app.route('/', methods=['GET','POST'])

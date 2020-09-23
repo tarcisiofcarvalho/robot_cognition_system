@@ -9,6 +9,9 @@ import math
 # Brings in the .action file and messages used by the move base action
 from move_base_msgs.msg import MoveBaseAction, MoveBaseGoal
 
+# Create an action client called "move_base" with action definition file "MoveBaseAction"
+client = actionlib.SimpleActionClient('move_base', MoveBaseAction)
+
 def transform_laser_pan_tilt_to_XY_2D_in_meters(pan=None, tilt=None, range=None):
     """
         This component will transform the laser pan and tilt orientation values
@@ -42,14 +45,13 @@ def move(x=None, y=None):
     """ 
         This component will request the ROS move_base to move the robot base to
         a given X and Y value in meters 
+        Reference: http://wiki.ros.org/move_base
+        Reference: https://wiki.ros.org/actionlib/DetailedDescription
     """
-
-    # Create an action client called "move_base" with action definition file "MoveBaseAction"
-    client = actionlib.SimpleActionClient('move_base', MoveBaseAction)
  
     # Waits until the action server has started up and started listening for goals.
     client.wait_for_server()
-
+    
     # Creates a new goal with the MoveBaseGoal constructor
     goal = MoveBaseGoal()
     goal.target_pose.header.frame_id = "base_link"
@@ -80,6 +82,21 @@ def move(x=None, y=None):
     else:
     # Result of executing the action
         return client.get_result()   
+
+def stop():
+    client.cancel_all_goals()
+
+    # Waits for the server to finish performing the action.
+    wait = client.wait_for_result()
+
+    # If the result doesn't arrive, assume the Server is not available
+    if not wait:
+        rospy.logerr("Action server not available!")
+        rospy.signal_shutdown("Action server not available!")
+        return 200
+    else:
+    # Result of executing the action
+        return 200
 
 def process(pan=None, tilt=None, laser_range=None):
     """ 

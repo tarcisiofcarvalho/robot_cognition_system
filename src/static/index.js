@@ -72,39 +72,51 @@ var app = new Vue({
             }
             axios
             .post('/base_move',data=body)
-            .then(response => (
-                this.go_achieved = true,
-                this.moving = false,
-                this.process_error = false
-            )
-                // function (response){
-                    
-                //     if(response.status === 200){
-                //         console.log(response.status);
-                //         this.go_achieved = true;
-                //         this.moving = false;
-                //         this.process_error = false;
-                //     }else{
-                //         console.log(response);
-                //         console.log("checkpoint 5 ");
-                //         this.go_achieved = false;
-                //         this.moving = false;
-                //         this.process_error = true;
-                //     }
-                
-                // }
+            .then(response => {
+                    if(response.status === 200){
+                        console.log("checkpoint 4");
+                        console.log(response.status);
+                        if(this.process_interrupted){
+                            this.go_achieved = false;
+                        }else{
+                            this.go_achieved = true;
+                        }
+                        this.moving = false;
+                        this.process_error = false;
+                    }else{
+                        console.log("checkpoint 5");
+                        this.go_achieved = false;
+                        this.moving = false;
+                        this.process_error = true;
+                    }
+                }
             )
         },
         stop(){
+            console.log("checkpoint 3");
             this.stopping = true;
             axios
             .post('/base_stop')
             .then(
-                response => (
-                    console.log(response),
-                    this.stopping = false,
-                    this.go_achieved = false
-                )
+                response => {
+                    console.log("checkpoint 3.1");
+                    console.log(response);
+                    if(response.status == 200){
+                        console.log("checkpoint 3.2");
+                        this.stopping = false;
+                        this.go_achieved = false;
+                        this.moving = false;
+                        this.process_interrupted = true;
+                    }else{
+                        this.process_error = true;
+                        this.stopping = false;
+                        this.go_achieved = false;
+                        this.moving = false;
+                        this.process_interrupted = false;
+                    }
+                }
+                    
+                
             )
         }       
     }
