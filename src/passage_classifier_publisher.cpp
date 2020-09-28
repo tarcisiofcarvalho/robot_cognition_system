@@ -245,7 +245,10 @@ class PassageClassificationProcess{
               searchPoint.x = it->z; // z to x
               searchPoint.y = it->y;
               searchPoint.z = -it->x; // x to z
-
+                    cout.precision(dbl::max_digits10);
+                    cout << "z: " << searchPoint.z << endl;
+                    cout << "x: " << searchPoint.x << endl;
+                    cout << "y: " << searchPoint.y << endl;
               // K nearest neighbor search
 
               int K = 10;
@@ -259,8 +262,10 @@ class PassageClassificationProcess{
                 for (size_t i = 0; i < pointIdxNKNSearch.size (); ++i){
                   
                   total++;
-
-                  if(cloud->points[ pointIdxNKNSearch[i]].g==255){
+                  // 
+                  if(cloud->points[ pointIdxNKNSearch[i]].g==255
+                     && searchPoint.y <= std::stof (getenv("HEIGHT_THRESHOLD"))
+                  ){
                     greenCount++;
                   }
                 }
@@ -329,6 +334,7 @@ int main(int argc, char** argv){
   printf("LASER_TO_KINECT_Y = %s \n", getenv("LASER_TO_KINECT_Y"));
   printf("LASER_TO_KINECT_Z = %s \n", getenv("LASER_TO_KINECT_Z"));
   printf("MINIMUM_GREEN_POINTS = %s \n", getenv("MINIMUM_GREEN_POINTS"));
+  printf("HEIGHT_THRESHOLD = %s \n", getenv("HEIGHT_THRESHOLD"));
   printf("ROS_LOOP_RATE = %s \n", getenv("ROS_LOOP_RATE"));
   printf("=================================================== \n");
 

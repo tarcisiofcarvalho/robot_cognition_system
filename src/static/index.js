@@ -48,19 +48,19 @@ var app = new Vue({
             this.stopping = false;
         },
         minus_pan(){
-            this.laser_pan = this.laser_pan - 5;
+            this.laser_pan = this.laser_pan - 1;
             this.process_laser();
         },
         plus_pan(){
-            this.laser_pan = this.laser_pan + 5;
+            this.laser_pan = this.laser_pan + 1;
             this.process_laser();
         },
         minus_tilt(){
-            this.laser_tilt = this.laser_tilt - 5;
+            this.laser_tilt = this.laser_tilt - 1;
             this.process_laser();
         },                
         plus_tilt(){
-            this.laser_tilt = this.laser_tilt + 5;
+            this.laser_tilt = this.laser_tilt + 1;
             this.process_laser();
         },
         go(){
@@ -74,7 +74,6 @@ var app = new Vue({
             .post('/base_move',data=body)
             .then(response => {
                     if(response.status === 200){
-                        console.log("checkpoint 4");
                         console.log(response.status);
                         if(this.process_interrupted){
                             this.go_achieved = false;
@@ -84,7 +83,6 @@ var app = new Vue({
                         this.moving = false;
                         this.process_error = false;
                     }else{
-                        console.log("checkpoint 5");
                         this.go_achieved = false;
                         this.moving = false;
                         this.process_error = true;
@@ -93,16 +91,12 @@ var app = new Vue({
             )
         },
         stop(){
-            console.log("checkpoint 3");
             this.stopping = true;
             axios
             .post('/base_stop')
             .then(
                 response => {
-                    console.log("checkpoint 3.1");
-                    console.log(response);
                     if(response.status == 200){
-                        console.log("checkpoint 3.2");
                         this.stopping = false;
                         this.go_achieved = false;
                         this.moving = false;
