@@ -284,7 +284,7 @@ class UPDProcess{
 
             double unevenness = std::stod (getenv("UPD_UNEVENNESS"));
             double unevennessMax = std::stod (getenv("UPD_UNEVENNESS_MAX"));
-            double radAngle = (std::stod(getenv("UPD_RAD_ANGL")) * M_PI / 180);
+            double radAngle = (std::stod(getenv("UPD_DEG_ANGL")) * M_PI / 180);
             
             // 8.2 Get UPD colored map
             m_upd->setColorMapType(false);
@@ -401,6 +401,7 @@ int main(int argc, char** argv){
     printf("UPD_UNEVENNESS = %s \n", getenv("UPD_UNEVENNESS"));
     printf("UPD_UNEVENNESS_MAX = %s \n", getenv("UPD_UNEVENNESS_MAX"));
     printf("UPD_SEARCH_RADIUS = %s \n", getenv("UPD_SEARCH_RADIUS"));
+    printf("UPD_DEG_ANGL = %s \n", getenv("UPD_DEG_ANGL"));
     printf("UPD_VOX_GRID_LEAF_X = %s \n", getenv("UPD_VOX_GRID_LEAF_X"));
     printf("UPD_VOX_GRID_LEAF_Y = %s \n", getenv("UPD_VOX_GRID_LEAF_Y"));
     printf("UPD_VOX_GRID_LEAF_Z = %s \n", getenv("UPD_VOX_GRID_LEAF_Z"));

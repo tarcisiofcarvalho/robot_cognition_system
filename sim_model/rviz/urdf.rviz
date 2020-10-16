@@ -6,7 +6,6 @@ Panels:
       Expanded:
         - /Global Options1
         - /Status1
-        - /Cost Map1
       Splitter Ratio: 0.5
     Tree Height: 351
   - Class: rviz/Selection
@@ -203,9 +202,9 @@ Visualization Manager:
       Unreliable: false
       Value: false
       Visibility:
-        "": true
         "AMCL Particle ": true
         Cost Map: true
+        Cost Map Grid: true
         Grid: true
         LaserScan: true
         Local Path: true
@@ -221,8 +220,8 @@ Visualization Manager:
     - Alpha: 1
       Autocompute Intensity Bounds: true
       Autocompute Value Bounds:
-        Max Value: 0.150000006
-        Min Value: 0.150000006
+        Max Value: -9999
+        Min Value: 9999
         Value: true
       Axis: Z
       Channel Name: intensity
@@ -444,12 +443,12 @@ Visualization Manager:
       Class: rviz/Map
       Color Scheme: map
       Draw Behind: false
-      Enabled: true
+      Enabled: false
       Name: Cost Map Grid
       Topic: /move_base/local_costmap/costmap
       Unreliable: false
       Use Timestamp: false
-      Value: true
+      Value: false
   Enabled: true
   Global Options:
     Background Color: 48; 48; 48
@@ -514,4 +513,4 @@ Window Geometry:
     collapsed: true
   Width: 1093
   X: 1535
-  Y: 24
+  Y: 156
