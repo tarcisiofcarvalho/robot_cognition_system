@@ -92,7 +92,7 @@
       </geometry>
     </collision>
     <inertial>
-      <mass value="10"/>
+      <mass value="15"/>
       <inertia ixx="1.0" ixy="0.0" ixz="0.0" iyy="1.0" iyz="0.0" izz="1.0"/>
     </inertial>       
   </link>
@@ -145,15 +145,16 @@
       <child link="${prefix}_${suffix}_wheel"/>
       <origin xyz="${-0.35} ${reflect*0.4} ${-0.17}"/>
       <dynamics damping="0.0" friction="${joint_friction}"/> 
+      <!-- <limit effort="5" velocity="5"/> -->
       <!-- <origin xyz="${baselen*reflect/3} 0 -${wheeldiam/2+.05}" rpy="0 0 0"/> -->
     </joint>
     <!-- This block provides the simulator (Gazebo) with information on a few additional
     physical properties. See http://gazebosim.org/tutorials/?tut=ros_urdf for more-->
     <gazebo reference="${prefix}_${suffix}_wheel">
-      <mu1 value="200.0"/>
-      <mu2 value="100.0"/>
-      <kp value="10000000.0" />
-      <kd value="1.0" />
+      <mu1 value="0.5"/>
+      <mu2 value="0.5"/>
+      <!-- <kp value="10000000.0" />
+      <kd value="1.0" /> -->
       <material>Gazebo/Grey</material>
     </gazebo>
 
@@ -207,16 +208,17 @@
       <child link="${prefix}_${suffix}_wheel"/>
       <origin xyz="0 0 -0.12"/>
       <dynamics damping="0.0" friction="${joint_friction}"/> 
+      <!-- <limit effort="2" velocity="2"/> -->
       <!-- <origin xyz="${baselen*reflect/3} 0 -${wheeldiam/2+.05}" rpy="0 0 0"/> -->
     </joint>
 
     <!-- This block provides the simulator (Gazebo) with information on a few additional
     physical properties. See http://gazebosim.org/tutorials/?tut=ros_urdf for more-->
     <gazebo reference="${prefix}_${suffix}_wheel">
-      <mu1 value="200.0"/>
-      <mu2 value="100.0"/>
-      <kp value="10000000.0" />
-      <kd value="1.0" />
+      <mu1 value="0.5"/>
+      <mu2 value="0.5"/>
+      <!-- <kp value="10000000.0" />
+      <kd value="1.0" /> -->
       <material>Gazebo/Grey</material>
     </gazebo>
 

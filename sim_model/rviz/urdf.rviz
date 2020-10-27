@@ -345,7 +345,7 @@ Visualization Manager:
       Color: 255; 255; 255
       Color Transformer: ""
       Decay Time: 0
-      Enabled: true
+      Enabled: false
       Invert Rainbow: false
       Max Color: 255; 255; 255
       Max Intensity: 4096
@@ -362,7 +362,7 @@ Visualization Manager:
       Unreliable: false
       Use Fixed Frame: true
       Use rainbow: true
-      Value: true
+      Value: false
     - Alpha: 1
       Buffer Length: 1
       Class: rviz/Path
@@ -512,5 +512,5 @@ Window Geometry:
   Views:
     collapsed: true
   Width: 1093
-  X: 1535
-  Y: 156
+  X: 271
+  Y: 54
