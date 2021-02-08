@@ -13,6 +13,7 @@
 #include <pcl/compression/octree_pointcloud_compression.h>
 #include <pcl_conversions/pcl_conversions.h>
 #include <pcl/visualization/cloud_viewer.h>
+#include <pcl/visualization/pcl_painter2D.h>
 #include <pcl/kdtree/kdtree_flann.h>
 #include <iostream>
 #include <upd.h>
@@ -30,12 +31,13 @@ using namespace std;
 #define _USE_MATH_DEFINES
 #define PI 3.14159265
 typedef std::numeric_limits< double > dbl;
+typedef pcl::PointCloud<pcl::PointXYZRGB> PointCloudRGB;
 
 // Common Point Cloud type used in this processing
 typedef pcl::PointCloud<pcl::PointXYZRGBA> PointCloud;
 
 
-// pcl::visualization::CloudViewer viewer2 ("Show Points");
+pcl::visualization::CloudViewer viewer2 ("Show Points");
 
 class PassageClassificationProcess{
     public:
@@ -46,18 +48,34 @@ class PassageClassificationProcess{
 
         PassageClassificationProcess(){
             // 1. Subscribe to the UPD Node
-            sub_upd_ = nh_.subscribe<PointCloud>("upd_point_cloud_classification", 1, &PassageClassificationProcess::upd_callback, this);
+            //sub_upd_ = nh_.subscribe<PointCloud>("upd_point_cloud_classification", 1, &PassageClassificationProcess::upd_callback, this);
 
             // 2. Subscribe to the Laser data Node
-            sub_laser_data_ = nh_.subscribe<PointCloud>("/laser/point_cloud", 1, &PassageClassificationProcess::laser_data_callback, this);
+            //sub_laser_data_ = nh_.subscribe<PointCloud>("/laser/point_cloud", 1, &PassageClassificationProcess::laser_data_callback, this);
 
             // 3. Subscribe to the Laser orientation data Node
-            sub_laser_orientation_ = nh_.subscribe<sensor_msgs::JointState>("/joint_states", 1, &PassageClassificationProcess::laser_data_orientation_callback, this);
+            //sub_laser_orientation_ = nh_.subscribe<sensor_msgs::JointState>("/joint_states", 1, &PassageClassificationProcess::laser_data_orientation_callback, this);
 
             // 4. Publish UPD Rviz data
-            pub_passage_condition_ = nh_.advertise<std_msgs::String> ("passage_condition", 1);
+            //pub_passage_condition_ = nh_.advertise<std_msgs::String> ("passage_condition", 1);
+
+            PassageClassificationProcess::test();
         }
     
+        void test(){
+          pcl::visualization::PCLPainter2D *painter= new pcl::visualization::PCLPainter2D();
+
+          painter->addLine (0, 0,  100, 100);
+          
+          painter->setPenWidth (2);
+          painter->setBrushColor (255, 0, 0,  100);
+
+          painter->addRect (10, 100,   100, 100);
+          painter->addEllipticArc (300, 100,   150, 50, 0, 180);
+        
+          //displays the canvas
+          painter->display ();
+        }
         /*
         * This function will process the callback of UPD publisher and subscribe to the laser publisher
         * that will request the passage classification next
@@ -340,26 +358,85 @@ int main(int argc, char** argv){
 
     // 1. ROS Init
     printf("Info: 1. ROS Init \n");
-    ros::init (argc, argv, "passage_classifier_node");
+    //ros::init (argc, argv, "passage_classifier_node");
 
     // 2. Publishing UPD data 
     printf("Info: 2. Publishing Passage Classification data \n");
-    PassageClassificationProcess pcProcess;
+    //PassageClassificationProcess pcProcess;
 
-    // 3. Defining ROS time cycle in HERTZ
-    ros::Rate loop_rate(std::stod (getenv("ROS_LOOP_RATE")));
+    PointCloudRGB::Ptr laser_vector (new PointCloudRGB);
+    pcl::PointXYZRGB laser_vector_points;
 
-    // 4. ROS loop
-    while (ros::ok()) {
-      // pcProcess.laser_data_orientation_ready ||
-      // std::cout << std::boolalpha;   
-      // std::cout<<pcProcess.laser_data_ready<<"\n"; 
-      // std::cout<<pcProcess.upd_data_ready<<"\n"; 
-      if(pcProcess.laser_data_ready == true && pcProcess.upd_data_ready == true){
-          pcProcess.classify_passage_condition();
-      }
-      ros::spinOnce();
-      loop_rate.sleep();
+    float A [3] = {1,1,1000};
+    float B [3] = {1000,1,1};
+    float C [3] = {fabsf(B[0]-A[0]), fabsf(B[1]-A[1]), fabsf(B[2]-A[2])};
+
+    int x_direction = 1;
+    int y_direction = 1;
+    int z_direction = 1;
+
+    if((B[0]<A[0])){x_direction=-1;};
+    if((B[1]<A[1])){y_direction=-1;};
+    if((B[2]<A[2])){z_direction=-1;};
+    
+    float max_difference = C[0];
+    if(C[1] > max_difference){ max_difference = C[1];};
+    if(C[2] > max_difference){ max_difference = C[2];};    
+
+    float line_vector_x [(int) max_difference +1] = {};
+    float line_vector_y [(int) max_difference +1] = {};
+    float line_vector_z [(int) max_difference +1] = {};
+
+    float step_x = C[0] / max_difference;
+    float step_y = C[1] / max_difference;
+    float step_z = C[2] / max_difference;
+
+    line_vector_x[0] = A[0];
+    line_vector_y[0] = A[1];
+    line_vector_z[0] = A[2];
+
+    for(int i=1; i<=max_difference;i++){
+
+      if(step_x==0){ line_vector_x[i] = A[0]; }else{line_vector_x[i] = line_vector_x[i-1] + (step_x*x_direction);};
+      if(step_y==0){ line_vector_y[i] = A[1]; }else{line_vector_y[i] = line_vector_y[i-1] + (step_y*y_direction);};
+      if(step_z==0){ line_vector_z[i] = A[2]; }else{line_vector_z[i] = line_vector_z[i-1] + (step_z*z_direction);};
+
+      cout << "Step: " << i << " - Step x: " << step_x << " - line_vector_x: " << line_vector_x[i] << endl;
+      cout << "Step: " << i << " - Step y: " << step_y << " - line_vector_y: " << line_vector_y[i] << endl;
+      cout << "Step: " << i << " - Step z: " << step_z << " - line_vector_z: " << line_vector_z[i] << endl;
+      cout << "====================================================" << endl;
 
     }
+    // Point Cloud generation
+    PointCloud::Ptr laser_line_cloud (new PointCloud);
+    pcl::PointXYZRGBA point;
+
+    for( int i = 0; i< (int) max_difference; i++){
+        point.x = line_vector_x[i];
+        point.y = line_vector_y[i];
+        point.z = line_vector_z[i];
+        point.r = 255;
+        point.g = 0;
+        point.b = 0;
+        point.a = 1;
+        laser_line_cloud->push_back(point);
+        cout << "chcked..." << endl;
+    }
+    viewer2.showCloud (laser_line_cloud);
+   while (!viewer2.wasStopped ())
+   {
+   }
+            
+    // 3. Defining ROS time cycle in HERTZ
+    //ros::Rate loop_rate(std::stod (getenv("ROS_LOOP_RATE")));
+
+    // 4. ROS loop
+    //while (ros::ok()) {
+    //  if(pcProcess.laser_data_ready == true && pcProcess.upd_data_ready == true){
+    //      pcProcess.classify_passage_condition();
+    //  }
+    //  ros::spinOnce();
+    //  loop_rate.sleep();
+
+    //}
 }
