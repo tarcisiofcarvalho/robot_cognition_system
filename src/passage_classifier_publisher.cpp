@@ -344,10 +344,7 @@ class PassageClassificationProcess{
               // Add to the robot path point cloud
               point2.x = it->z;
               point2.y = it->y*-1;
-              point2.z = it->x;
-              // point2.x = it2->z;
-              // point2.y = it2->y;
-              // point2.z = -it2->x;                      
+              point2.z = it->x;                     
               point2.r = 254;
               point2.g = 0;
               point2.b = 0;
@@ -367,35 +364,6 @@ class PassageClassificationProcess{
             // 4. Search the points
             while(process){
 
-              //if(x==0){
-                // Note: Changing the axis to be compatible with kinect axis data
-                // searchPoint.x = laser->points[0].z; // z to x
-                // searchPoint.y = laser->points[0].y;
-                // searchPoint.z = -laser->points[0].x; // x to z
-
-                      // Add to the robot path point cloud
-                      // point3.x = laser->points[0].z;
-                      // point3.y = laser->points[0].y;
-                      // point3.z = laser->points[0].x;
-                      // point2.x = it2->z;
-                      // point2.y = it2->y;
-                      // point2.z = -it2->x;                      
-                      // point3.r = 0;
-                      // point3.g = 0;
-                      // point3.b = 254;
-                      // point3.a = 255;                      
-                      // target_path_cloud->push_back(point3);   
-
-                // K nearest neighbor search
-              // }
-
-              // cout << "***** Next point ******" << endl;
-              // cout.precision(dbl::max_digits10);
-              // cout << "z: " << searchPoint.z << endl;
-              // cout << "x: " << searchPoint.x << endl;
-              // cout << "y: " << searchPoint.y << endl;
-
-              // cout << "***** Neighbors ******" << endl;
               int K = 10;
 
               std::vector<int> pointIdxNKNSearch(K);
@@ -410,7 +378,7 @@ class PassageClassificationProcess{
                    
                     // Calculate temp distance
                     distance_temp = distance(
-                        0, 0, 0,
+                        0, 0.50, 0,
                         cloud->points[ pointIdxNKNSearch[i]].x, cloud->points[ pointIdxNKNSearch[i]].y, cloud->points[ pointIdxNKNSearch[i]].z
                     );
 
@@ -424,29 +392,20 @@ class PassageClassificationProcess{
 
                 }
 
-                distance_total += (fabs(distance_candidate) - fabs(distance_previous));
-
-                
+                distance_total += fabs((fabs(distance_candidate) - fabs(distance_previous)));
                 cout << "***** Distance Calculation ******" << endl;
                 cout.precision(dbl::max_digits10);
                 cout << "Distance Previous: " << distance_previous << endl;
                 cout << "Distance Candidate: " << distance_candidate << endl;
+                cout << "Difference: " << fabs((fabs(distance_candidate) - fabs(distance_previous))) << endl;
                 cout << "Distance Total: " << distance_total << endl;
+                distance_previous = distance_candidate;
 
-                // Set the next search point
-                // cout << "***** Match ******" << endl;
-                // cout.precision(dbl::max_digits10);
-                // cout << "z: " << point_candidate.z << endl;
-                // cout << "x: " << point_candidate.x << endl;
-                // cout << "y: " << point_candidate.y << endl;
 
                 // Add to the robot path point cloud
                 point2.x = point_candidate.x;
                 point2.y = point_candidate.y*-1;
-                point2.z = point_candidate.z*-1;
-                // point2.x = it2->z;
-                // point2.y = it2->y;
-                // point2.z = -it2->x;                      
+                point2.z = point_candidate.z*-1;                   
                 point2.r = 0;
                 point2.g = 0;
                 point2.b = 254;
@@ -460,13 +419,16 @@ class PassageClassificationProcess{
 
               }
 
-              if(distance_candidate < 70){
+              if(distance_candidate < 1.7){
 
-                PointCloud::Ptr remain = generate_line_points(
-                                                              point2.x, point2.y, point2.z,
-                                                              0,0,0);
+                //distance_total += distance_candidate;
+                cout << "Distance Total: " << distance_total << endl;
+
+                PointCloud::Ptr remain (new PointCloud);
+                remain = generate_line_points(0,0.50,0,
+                                             point2.x, 0.50, point2.z);
              
-                for( it= laser->begin(); it!= remain->end(); it++){
+                for( it= remain->begin(); it!= remain->end(); it++){
                   // Add to the robot path point cloud
                   point_remain.x = it->x;
                   point_remain.y = it->y;
@@ -485,98 +447,6 @@ class PassageClassificationProcess{
               }
 
             }
-
-            // Add to the robot path point cloud
-            // point2.x = 0.0;
-            // point2.y = 0.0;
-            // point2.z = 2.0;
-            // point2.x = it2->z;
-            // point2.y = it2->y;
-            // point2.z = -it2->x;                      
-            // point2.r = 254;
-            // point2.g = 0;
-            // point2.b = 254;
-            // point2.a = 255;                      
-            // target_path_cloud->push_back(point2);
-            // 4. Include laser data into kinect UPD processed data
-            // if( PassageClassificationProcess::upd_data_ready==true){
-            //     // PointCloud::Ptr upd_temp = PassageClassificationProcess::upd_data;
-            //     // pcl::PointXYZRGBA point2;
-            //     // pcl::PointCloud<pcl::PointXYZRGBA>::iterator it2;
-
-            //     // for( it2= laser_data_filtered->begin(); it2!= laser_data_filtered->end(); it2++){
-            //     //     point2.x = it2->z;
-            //     //     point2.y = it2->y;
-            //     //     point2.z = -it2->x;
-            //     //     point2.r = 0;
-            //     //     point2.g = 0;
-            //     //     point2.b = 254;
-            //     //     point2.a = 255;
-            //     //     upd_temp->push_back(point2);
-            //     // }
-
-            //     if (!viewer2.wasStopped()){
-            //         viewer2.showCloud (PassageClassificationProcess::upd_data);
-            //     }
-            // }
-
-
-
-            // // 10. Transform/Rotate UPD data
-            // // Rotation
-            // Eigen::Matrix4f eRot;
-            // Eigen::Quaternionf PCRot;
-            // Eigen::Vector3f PCTrans;
-            // Eigen::Matrix<float, 4, 4> rotMatrix;
-
-
-            // // Clockwise rotation around z axis
-            // rotMatrix(0,0) = cos(2*PI);
-            // rotMatrix(0,1) = -sin(PI);
-            // rotMatrix(0,2) = 0;
-            // rotMatrix(0,3) = 0;
-
-            // rotMatrix(1,0) = sin(2*PI);
-            // rotMatrix(1,1) = cos(2*PI);
-            // rotMatrix(1,2) = 0;
-            // rotMatrix(1,3) = 0;
-
-            // rotMatrix(2,0) = 0;
-            // rotMatrix(2,1) = 0;
-            // rotMatrix(2,2) = 1;
-            // rotMatrix(2,3) = 0;    
-
-            // rotMatrix(3,0) = 0;
-            // rotMatrix(3,1) = 0;
-            // rotMatrix(3,2) = 0;
-            // rotMatrix(3,3) = 1;
-
-            
-            // pcl::transformPointCloud(*target_path_cloud, *target_path_cloud, rotMatrix);
-
-            // // Counterclockwise rotation around y axis
-            // rotMatrix(0,0) = cos(PI);
-            // rotMatrix(0,1) = 0;
-            // rotMatrix(0,2) = sin(PI);
-            // rotMatrix(0,3) = 0;
-
-            // rotMatrix(1,0) = 0;
-            // rotMatrix(1,1) = 1;
-            // rotMatrix(1,2) = 0;
-            // rotMatrix(1,3) = 0;
-
-            // rotMatrix(2,0) = -sin(PI);
-            // rotMatrix(2,1) = 0;
-            // rotMatrix(2,2) = cos(PI);
-            // rotMatrix(2,3) = 0;    
-
-            // rotMatrix(3,0) = 0;
-            // rotMatrix(3,1) = 0;
-            // rotMatrix(3,2) = 0;
-            // rotMatrix(3,3) = 1;
-
-            
-            // pcl::transformPointCloud(*target_path_cloud, *target_path_cloud, rotMatrix);
 
             // 6. Publish the passage condition
             sensor_msgs::PointCloud2 msgcloud;
@@ -601,7 +471,7 @@ class PassageClassificationProcess{
                         pow(z2 - z1, 2) * 1.0);
             std::cout << std::fixed;
             std::cout << std::setprecision(2);
-            cout << " Distance is: " << d;
+            // cout << " Distance is: " << d;
             return d;
         }
 
@@ -626,6 +496,7 @@ class PassageClassificationProcess{
           float max_difference = C[0];
           if(C[1] > max_difference){ max_difference = C[1];};
           if(C[2] > max_difference){ max_difference = C[2];};    
+          max_difference = max_difference / 0.05;
 
           float line_vector_x [(int) max_difference +1] = {};
           float line_vector_y [(int) max_difference +1] = {};
@@ -639,7 +510,25 @@ class PassageClassificationProcess{
           line_vector_y[0] = A[1];
           line_vector_z[0] = A[2];
 
-          cout << "Max diff: " << max_difference << endl;
+          // cout << "x1: " << x1 << endl;
+
+          // cout << "y1: " << y1 << endl;
+
+          // cout << "z1: " << z1 << endl;
+
+          // cout << "x2: " << x2 << endl;
+
+          // cout << "y2: " << y2 << endl;
+
+          // cout << "z2: " << z2 << endl;
+
+          // cout << "Max diff: " << max_difference << endl;
+
+          // cout << "Step x: " << step_x << endl;
+
+          // cout << "Step y: " << step_y << endl;
+
+          // cout << "Step z: " << step_z << endl;
 
           for(int i=1; i<=max_difference;i++){
 
@@ -647,10 +536,10 @@ class PassageClassificationProcess{
             if(step_y==0){ line_vector_y[i] = A[1]; }else{line_vector_y[i] = line_vector_y[i-1] + (step_y*y_direction);};
             if(step_z==0){ line_vector_z[i] = A[2]; }else{line_vector_z[i] = line_vector_z[i-1] + (step_z*z_direction);};
 
-            cout << "Step: " << i << " - Step x: " << step_x << " - line_vector_x: " << line_vector_x[i] << endl;
-            cout << "Step: " << i << " - Step y: " << step_y << " - line_vector_y: " << line_vector_y[i] << endl;
-            cout << "Step: " << i << " - Step z: " << step_z << " - line_vector_z: " << line_vector_z[i] << endl;
-            cout << "====================================================" << endl;
+            // cout << "Step: " << i << " - Step x: " << step_x << " - line_vector_x: " << line_vector_x[i] << endl;
+            // cout << "Step: " << i << " - Step y: " << step_y << " - line_vector_y: " << line_vector_y[i] << endl;
+            // cout << "Step: " << i << " - Step z: " << step_z << " - line_vector_z: " << line_vector_z[i] << endl;
+            // cout << "====================================================" << endl;
 
           }
           // Point Cloud generation
@@ -668,6 +557,8 @@ class PassageClassificationProcess{
               laser_line_cloud->push_back(point);
               // cout << "chcked..." << endl;
           }
+
+          return laser_line_cloud;
 
         }
 
