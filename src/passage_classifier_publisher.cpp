@@ -15,6 +15,7 @@
 #include <pcl/visualization/cloud_viewer.h>
 #include <pcl/kdtree/kdtree_flann.h>
 #include <iostream>
+#include <sstream>
 #include <upd.h>
 #include <export.h>
 #include <math.h>
@@ -60,6 +61,7 @@ class PassageClassificationProcess{
             // 5. Publish target path to RVIZ data
             target_path_ = nh_.advertise<PointCloud> ("target_path", 1);
             
+            pub_target_distance_ = nh_.advertise<std_msgs::String> ("target_distance", 1);
         }
     
         /*
@@ -281,6 +283,7 @@ class PassageClassificationProcess{
             std_msgs::String msg;
 
             if((greenCount / total) >= std::stof (getenv("MINIMUM_GREEN_POINTS"))){
+              generate_path_line();
               msg.data = "safe";
               cout.precision(dbl::max_digits10);
               cout << "safe total: " << total << endl;
@@ -441,6 +444,12 @@ class PassageClassificationProcess{
                 }             
 
                 process = false;
+                
+                // std::ostringstream distance_total_string;
+                // distance_total_string << distance_total;
+
+                // pub_target_distance_.publish(distance_total_string.str());
+
               }else{
                 distance_candidate = INFINITY;
 
@@ -569,6 +578,7 @@ class PassageClassificationProcess{
         ros::Subscriber sub_laser_orientation_;
         ros::Publisher pub_passage_condition_;
         ros::Publisher target_path_;
+        ros::Publisher pub_target_distance_;
         PointCloud::Ptr upd_data;
         PointCloud::Ptr laser_data;
         double laser_pan = 0.0;
@@ -610,8 +620,7 @@ int main(int argc, char** argv){
       // std::cout<<pcProcess.laser_data_ready<<"\n"; 
       // std::cout<<pcProcess.upd_data_ready<<"\n"; 
       if(pcProcess.laser_data_ready == true && pcProcess.upd_data_ready == true){
-          // pcProcess.classify_passage_condition();
-          pcProcess.generate_path_line();
+        pcProcess.classify_passage_condition();  
       }
       ros::spinOnce();
       loop_rate.sleep();

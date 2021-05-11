@@ -15,7 +15,7 @@
     <arg name="paused" value="$(arg paused)"/>
     <arg name="use_sim_time" value="$(arg use_sim_time)"/>
     <arg name="headless" value="$(arg headless)"/>
-    <arg name="world_name" value="$(find robot_cognition_system)/sim_model/world/rcs_model_2.world"/>
+    <arg name="world_name" value="$(find robot_cognition_system)/sim_model/world/rcs_model_1.world"/>
   </include>
 
   <param name="robot_description" command="$(find xacro)/xacro $(arg model)" />
