@@ -19,10 +19,12 @@ class PassageCondition():
     pan_deg = 0
     tilt_deg = 0
     laser_range = 0
+    target_distance = 0
 
     def __init__(self):
         self.subscriber = rospy.Subscriber("/passage_condition", String, self.passage_classification)
         self.subscriber_laser = rospy.Subscriber("/laser/pointer", LaserScan, self.laser_data)
+        self.subscriber_target_distance = rospy.Subscriber("/target_distance", Float64, self.target_distance_data)
         self.passage_condition = "test"
         self.laser_pan_tilt_set()
         
@@ -33,6 +35,9 @@ class PassageCondition():
 
     def laser_data(self, data):
         PassageCondition.laser_range = data
+
+    def target_distance_data(self, data):
+        PassageCondition.target_distance = data        
 
 
     def laser_pan_tilt_set(self):
@@ -50,6 +55,7 @@ class PassageCondition():
 def passage_condition_route():
     passage_condition_result = PassageCondition.passage_condition.data
     print("Passage condition: " + str(passage_condition_result))
+    print("Target distance: " + str(PassageCondition.target_distance))
     return jsonify({'condition':str(passage_condition_result)})
 
 @app.route('/laser_move', methods=['POST'])
@@ -61,9 +67,12 @@ def pan_tilt_move_route():
 
 @app.route('/base_move', methods=['POST'])
 def move_route():
+    print("Pan > " + str(PassageCondition.pan_deg))
+    print("Tilt > " + str(PassageCondition.tilt_deg))
+    print("Distance > " + str(PassageCondition.target_distance))
     result = move_action.process(pan=math.radians(PassageCondition.pan_deg),
                         tilt=math.radians(PassageCondition.tilt_deg),
-                        laser_range=PassageCondition.laser_range)
+                        distance=PassageCondition.target_distance)
     if result == True:
         return jsonify({}), 200
     return 500

@@ -1,5 +1,6 @@
 #include <ros/ros.h> 
 #include <std_msgs/String.h>
+#include <std_msgs/Float64.h>
 #include <sensor_msgs/JointState.h>
 #include <sstream>
 #include <pcl_ros/point_cloud.h>
@@ -61,7 +62,8 @@ class PassageClassificationProcess{
             // 5. Publish target path to RVIZ data
             target_path_ = nh_.advertise<PointCloud> ("target_path", 1);
             
-            pub_target_distance_ = nh_.advertise<std_msgs::String> ("target_distance", 1);
+            // 6. Publish target distance em meters
+            pub_target_distance_ = nh_.advertise<std_msgs::Float64> ("target_distance", 1);
         }
     
         /*
@@ -305,7 +307,6 @@ class PassageClassificationProcess{
            printf("***** Finished ******* \n");
         }
 
-
         /*
         * This function will process the callback for laser orientation
         */
@@ -316,7 +317,10 @@ class PassageClassificationProcess{
 
         }
 
-
+        /*
+        * This function will calculate the distance from robot to the target point
+        * and publish the visualization of this path
+        */
         void generate_path_line(){
 
             // 1. Defining the kdtree and the point object for the search
@@ -396,12 +400,12 @@ class PassageClassificationProcess{
                 }
 
                 distance_total += fabs((fabs(distance_candidate) - fabs(distance_previous)));
-                cout << "***** Distance Calculation ******" << endl;
-                cout.precision(dbl::max_digits10);
-                cout << "Distance Previous: " << distance_previous << endl;
-                cout << "Distance Candidate: " << distance_candidate << endl;
-                cout << "Difference: " << fabs((fabs(distance_candidate) - fabs(distance_previous))) << endl;
-                cout << "Distance Total: " << distance_total << endl;
+                // cout << "***** Distance Calculation ******" << endl;
+                // cout.precision(dbl::max_digits10);
+                // cout << "Distance Previous: " << distance_previous << endl;
+                // cout << "Distance Candidate: " << distance_candidate << endl;
+                // cout << "Difference: " << fabs((fabs(distance_candidate) - fabs(distance_previous))) << endl;
+                // cout << "Distance Total: " << distance_total << endl;
                 distance_previous = distance_candidate;
 
 
@@ -445,10 +449,6 @@ class PassageClassificationProcess{
 
                 process = false;
                 
-                // std::ostringstream distance_total_string;
-                // distance_total_string << distance_total;
-
-                // pub_target_distance_.publish(distance_total_string.str());
 
               }else{
                 distance_candidate = INFINITY;
@@ -457,7 +457,7 @@ class PassageClassificationProcess{
 
             }
 
-            // 6. Publish the passage condition
+            // 6. Publish the target path
             sensor_msgs::PointCloud2 msgcloud;
             pcl::toROSMsg(*target_path_cloud, msgcloud); 
             std::string tf_frame;
@@ -467,11 +467,19 @@ class PassageClassificationProcess{
             msgcloud.header.stamp = ros::Time::now();
             target_path_.publish (msgcloud);
 
-           printf("classify_passage_condition \n");
-           printf("***** Finished ******* \n");
+           // 7. Publish the target distance
+           cout.precision(dbl::max_digits10);
+           cout << "Distance Total: " << distance_total << endl;
+           std_msgs::Float64 msg_target_distance;
+           msg_target_distance.data = distance_total;
+           pub_target_distance_.publish(msg_target_distance);
+
         }
 
 
+        /*
+        * This is a support function to calculae the distance between 2 points
+        */
         float distance(float x1, float y1, float z1, 
                       float x2, float y2, float z2)
         {
@@ -484,6 +492,9 @@ class PassageClassificationProcess{
             return d;
         }
 
+        /*
+        * This is a support function to generate a point cloud line points between two points
+        */
         PointCloud::Ptr generate_line_points(float x1, float y1, float z1, 
                                   float x2, float y2, float z2){
 

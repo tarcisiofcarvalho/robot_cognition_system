@@ -12,10 +12,10 @@ from move_base_msgs.msg import MoveBaseAction, MoveBaseGoal
 # Create an action client called "move_base" with action definition file "MoveBaseAction"
 client = actionlib.SimpleActionClient('move_base', MoveBaseAction)
 
-def transform_laser_pan_tilt_to_XY_2D_in_meters(pan=None, tilt=None, range=None):
+def transform_laser_pan_tilt_to_XY_2D_in_meters(pan=None, tilt=None, distance=None):
     """
-        This component will transform the laser pan and tilt orientation values
-        to a point XY in the 2D plane
+        This component will transform the laser pan and tilt orientation values and the 
+        distance from robot to the move target to a point XY in the 2D plane
         Parameters:
         - pan: angle in radians
         - tilt: angle in radians
@@ -30,11 +30,14 @@ def transform_laser_pan_tilt_to_XY_2D_in_meters(pan=None, tilt=None, range=None)
 
     # print("Pan: {0}".format(pan))
     # print("Tilt: {0}".format(tilt))
-    # print("Range: {0}".format(range.ranges[0]))
+    print("distance: {0}".format(distance))
 
-    if pan is not None and tilt is not None and range is not None:
-        x = range.ranges[0] * math.cos(tilt) * math.cos(pan)
-        y = range.ranges[0] * math.cos(tilt) * math.sin(pan)
+    # Convert distance to Int
+    distance = int(round(distance))
+
+    if pan is not None and tilt is not None and distance is not None:
+        x = distance * math.cos(tilt) * math.cos(pan)
+        y = distance * math.cos(tilt) * math.sin(pan)
         print("x: {0}".format(x))
         print("y: {0}".format(y))
         return x, y
@@ -98,7 +101,7 @@ def stop():
     # Result of executing the action
         return 200
 
-def process(pan=None, tilt=None, laser_range=None):
+def process(pan=None, tilt=None, distance=None):
     """ 
         Execute the main process of the move to target request 
     """
@@ -110,7 +113,7 @@ def process(pan=None, tilt=None, laser_range=None):
         # 1. Convert the laser orientation data to X and Y axis point direction
         x, y = transform_laser_pan_tilt_to_XY_2D_in_meters(pan=pan, 
                                                            tilt=tilt, 
-                                                           range=laser_range)
+                                                           distance=distance)
 
         # 2. Set X and Y meters ahead to /move_base/goal node
         result = move(x, y)
