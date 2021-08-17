@@ -37,7 +37,7 @@ class PassageCondition():
         PassageCondition.laser_range = data
 
     def target_distance_data(self, data):
-        PassageCondition.target_distance = data        
+        PassageCondition.target_distance = data.data        
 
 
     def laser_pan_tilt_set(self):

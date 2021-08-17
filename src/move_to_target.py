@@ -121,5 +121,6 @@ def process(pan=None, tilt=None, distance=None):
         if result:
             rospy.loginfo("Goal execution done!")
             return True
-    except rospy.ROSInterruptException:
+    except rospy.ROSInterruptException as e:
+        print(e)
         rospy.loginfo("Navigation test finished.")
