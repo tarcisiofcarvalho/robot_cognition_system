@@ -36,13 +36,17 @@ def transform_laser_pan_tilt_to_XY_2D_in_meters(pan=None, tilt=None, distance=No
     distance = int(round(distance))
 
     if pan is not None and tilt is not None and distance is not None:
-        x = distance * math.cos(tilt) * math.cos(pan)
-        y = distance * math.cos(tilt) * math.sin(pan)
-        print("x: {0}".format(x))
-        print("y: {0}".format(y))
-        return x, y
+        try:
+            x = distance * math.cos(tilt) * math.cos(pan)
+            y = distance * math.cos(tilt) * math.sin(pan)
+            print("x: {0}".format(x))
+            print("y: {0}".format(y))
+            return x, y
+        except e:
+            print(e)
+            return None, None
 
-    return None
+    return None, None
 
 def move(x=None, y=None):
     """ 

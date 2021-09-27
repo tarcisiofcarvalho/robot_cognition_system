@@ -45,6 +45,7 @@ class PassageClassificationProcess{
         bool upd_data_ready = false;
         bool laser_data_ready = false;
         bool laser_data_orientation_ready = false;
+        bool classifier_ready = true;
 
         PassageClassificationProcess(){
             // 1. Subscribe to the UPD Node
@@ -285,7 +286,9 @@ class PassageClassificationProcess{
             std_msgs::String msg;
 
             if((greenCount / total) >= std::stof (getenv("MINIMUM_GREEN_POINTS"))){
-              generate_path_line();
+              if(classifier_ready == true){
+                generate_path_line();
+              }
               msg.data = "safe";
               cout.precision(dbl::max_digits10);
               cout << "safe total: " << total << endl;
@@ -323,15 +326,17 @@ class PassageClassificationProcess{
         */
         void generate_path_line(){
 
+            classifier_ready == false;
+
             // 1. Defining the kdtree and the point object for the search
-            pcl::KdTreeFLANN<pcl::PointXYZRGBA> kdtree;
-            pcl::PointXYZRGBA searchPoint;
+            // pcl::KdTreeFLANN<pcl::PointXYZRGBA> kdtree;
+            // pcl::PointXYZRGBA searchPoint;
 
             // 2. Load the UPD cloud to kdtree object 
-            const boost::shared_ptr<const pcl::PointCloud<pcl::PointXYZRGBA>> cloud = PassageClassificationProcess::upd_data;
-            kdtree.setInputCloud (cloud);
+            //const boost::shared_ptr<const pcl::PointCloud<pcl::PointXYZRGBA>> cloud = PassageClassificationProcess::upd_data;
+            kdtree.setInputCloud (PassageClassificationProcess::upd_data);
 
-            PointCloud::Ptr laser = PassageClassificationProcess::laser_data;
+            // PointCloud::Ptr laser = PassageClassificationProcess::laser_data;
 
             // 3. Iterate the laser points and search them using kdtree
             pcl::PointCloud<pcl::PointXYZRGBA>::iterator it;
@@ -347,7 +352,7 @@ class PassageClassificationProcess{
             pcl::PointXYZRGBA point_remain;
             pcl::PointXYZRGBA point_candidate;
 
-            for( it= laser->begin(); it!= laser->end(); it++){
+            for( it= PassageClassificationProcess::laser_data->begin(); it!= PassageClassificationProcess::laser_data->end(); it++){
               // Add to the robot path point cloud
               point2.x = it->z;
               point2.y = it->y*-1;
@@ -364,14 +369,14 @@ class PassageClassificationProcess{
             float distance_temp = 0;
 
             bool process = true;
-            searchPoint.x = laser->points[0].z; // z to x
-            searchPoint.y = laser->points[0].y;
-            searchPoint.z = -laser->points[0].x; // x to z
+            searchPoint.x = PassageClassificationProcess::laser_data->points[0].z; // z to x
+            searchPoint.y = PassageClassificationProcess::laser_data->points[0].y;
+            searchPoint.z = -PassageClassificationProcess::laser_data->points[0].x; // x to z
 
             // 4. Search the points
             while(process){
 
-              int K = 10;
+              int K = 5;
 
               std::vector<int> pointIdxNKNSearch(K);
               std::vector<float> pointNKNSquaredDistance(K);
@@ -381,73 +386,78 @@ class PassageClassificationProcess{
                 
                 for (size_t i = 0; i < pointIdxNKNSearch.size (); ++i){
                   
-                  if(cloud->points[ pointIdxNKNSearch[i]].g==255){
+                  if(PassageClassificationProcess::upd_data->points[ pointIdxNKNSearch[i]].g==255){
                    
                     // Calculate temp distance
                     distance_temp = distance(
                         0, 0.50, 0,
-                        cloud->points[ pointIdxNKNSearch[i]].x, cloud->points[ pointIdxNKNSearch[i]].y, cloud->points[ pointIdxNKNSearch[i]].z
+                        PassageClassificationProcess::upd_data->points[ pointIdxNKNSearch[i]].x, PassageClassificationProcess::upd_data->points[ pointIdxNKNSearch[i]].y, PassageClassificationProcess::upd_data->points[ pointIdxNKNSearch[i]].z
                     );
 
                     // Revalidate the candidate point
                     if(distance_temp < distance_candidate){
                       distance_candidate = distance_temp;
-                      point_candidate = cloud->points[ pointIdxNKNSearch[i]];
+                      point_candidate = PassageClassificationProcess::upd_data->points[ pointIdxNKNSearch[i]];
                     }
 
                   }
 
                 }
 
-                distance_total += fabs((fabs(distance_candidate) - fabs(distance_previous)));
-                // cout << "***** Distance Calculation ******" << endl;
-                // cout.precision(dbl::max_digits10);
-                // cout << "Distance Previous: " << distance_previous << endl;
-                // cout << "Distance Candidate: " << distance_candidate << endl;
-                // cout << "Difference: " << fabs((fabs(distance_candidate) - fabs(distance_previous))) << endl;
-                // cout << "Distance Total: " << distance_total << endl;
-                distance_previous = distance_candidate;
+                // Condition: The nearest point was found already, stop the processing
+                if( ( distance_candidate >= distance_previous || distance_candidate <= std::stod (getenv("POINT_CLOUD_TO_ROBOT_CENTER") )) && distance_previous > 0){
+                  process = false;
+                  cout << "***** Distance Calculation ******" << endl;
+                  cout.precision(dbl::max_digits10);
+                  cout << "Distance Total: " << distance_total << endl;
+                }else{
+                  distance_total += fabs((fabs(distance_candidate) - fabs(distance_previous)));
+                  cout << "***** Distance Calculation Partial ******" << endl;
+                  cout.precision(dbl::max_digits10);
+                  // cout << "Distance Previous: " << distance_previous << endl;
+                  // cout << "Distance Candidate: " << distance_candidate << endl;
+                  // cout << "Difference: " << fabs((fabs(distance_candidate) - fabs(distance_previous))) << endl;
+                  cout << "Distance Total: " << distance_total << endl;
+                  distance_previous = distance_candidate;
 
+                  // Add to the robot path point cloud
+                  point2.x = point_candidate.x;
+                  point2.y = point_candidate.y*-1;
+                  point2.z = point_candidate.z*-1;                   
+                  point2.r = 0;
+                  point2.g = 0;
+                  point2.b = 254;
+                  point2.a = 255;                      
+                  target_path_cloud->push_back(point2);
 
-                // Add to the robot path point cloud
-                point2.x = point_candidate.x;
-                point2.y = point_candidate.y*-1;
-                point2.z = point_candidate.z*-1;                   
-                point2.r = 0;
-                point2.g = 0;
-                point2.b = 254;
-                point2.a = 255;                      
-                target_path_cloud->push_back(point2);
-
-                searchPoint.x = point_candidate.x;
-                searchPoint.y = point_candidate.y;
-                searchPoint.z = point_candidate.z;
-
+                  searchPoint.x = point_candidate.x;
+                  searchPoint.y = point_candidate.y;
+                  searchPoint.z = point_candidate.z;
+                }
 
               }
-
-              if(distance_candidate < 1.7){
+              //distance_candidate < std::stod (getenv("POINT_CLOUD_TO_ROBOT_CENTER")) || 
+              if(process == false){
 
                 //distance_total += distance_candidate;
                 cout << "Distance Total: " << distance_total << endl;
 
                 PointCloud::Ptr remain (new PointCloud);
-                remain = generate_line_points(0,0.50,0,
-                                             point2.x, 0.50, point2.z);
+                remain = generate_line_points(0,0.50,0, point2.x, point2.y, point2.z);
              
                 for( it= remain->begin(); it!= remain->end(); it++){
                   // Add to the robot path point cloud
                   point_remain.x = it->x;
                   point_remain.y = it->y;
                   point_remain.z = it->z;                      
-                  point_remain.r = 254;
-                  point_remain.g = 255;
-                  point_remain.b = 0;
+                  point_remain.r = 0;
+                  point_remain.g = 0;
+                  point_remain.b = 254;
                   point_remain.a = 255;                      
                   target_path_cloud->push_back(point_remain);
                 }             
 
-                process = false;
+                //process = false;
                 
 
               }else{
@@ -467,12 +477,13 @@ class PassageClassificationProcess{
             msgcloud.header.stamp = ros::Time::now();
             target_path_.publish (msgcloud);
 
-           // 7. Publish the target distance
-           cout.precision(dbl::max_digits10);
-           cout << "Distance Total: " << distance_total << endl;
-           std_msgs::Float64 msg_target_distance;
-           msg_target_distance.data = distance_total;
-           pub_target_distance_.publish(msg_target_distance);
+            // 7. Publish the target distance
+            cout.precision(dbl::max_digits10);
+            cout << "Distance Total: " << distance_total << endl;
+            std_msgs::Float64 msg_target_distance;
+            msg_target_distance.data = distance_total;
+            pub_target_distance_.publish(msg_target_distance);
+            classifier_ready = true;
 
         }
 
@@ -592,6 +603,8 @@ class PassageClassificationProcess{
         ros::Publisher pub_target_distance_;
         PointCloud::Ptr upd_data;
         PointCloud::Ptr laser_data;
+        pcl::KdTreeFLANN<pcl::PointXYZRGBA> kdtree;
+        pcl::PointXYZRGBA searchPoint;        
         double laser_pan = 0.0;
         double laser_tilt = 0.0;
   

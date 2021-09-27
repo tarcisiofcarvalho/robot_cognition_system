@@ -51,12 +51,58 @@ class PassageCondition():
             pub_laser_tilt.publish(math.radians(self.tilt_deg))
             rate.sleep()
 
+def laser_pan_tilt_distance_to_XY_2D_in_meters(pan=None, tilt=None, distance=None):
+    """
+        This component will transform the laser pan and tilt orientation values and the 
+        distance from robot to the move target to a point XY in the 2D plane
+        Parameters:
+        - pan: angle in radians
+        - tilt: angle in radians
+        - range: in meters
+    """
+    # https://www.mathworks.com/matlabcentral/answers/427558-how-can-i-create-xyz-coordinant-from-pan-tilt-system-angles
+    # function [x, y, z] = my_sph2cart(pan,tilt,range)
+    #     x = range .* cosd(tilt) .* cosd(pan);
+    #     y = range .* cosd(tilt) .* sind(pan);
+    #     z = range .* sind(tilt);
+    # end
+
+    # print("Pan: {0}".format(pan))
+    # print("Tilt: {0}".format(tilt))
+    print("distance: {0}".format(distance))
+
+    # Convert distance to Int
+    distance = int(round(distance))
+
+    if pan is not None and tilt is not None and distance is not None:
+        try:
+            x = distance * math.cos(tilt) * math.cos(pan)
+            y = distance * math.cos(tilt) * math.sin(pan)
+            print("x: {0}".format(x))
+            print("y: {0}".format(y))
+            return x, y
+        except e:
+            print(e)
+            return None, None
+
+    return None, None
+
 @app.route('/passage_condition', methods=['GET'])
 def passage_condition_route():
     passage_condition_result = PassageCondition.passage_condition.data
     print("Passage condition: " + str(passage_condition_result))
     print("Target distance: " + str(PassageCondition.target_distance))
-    return jsonify({'condition':str(passage_condition_result)})
+    
+    # Get the Target X and Y from Robot Base
+    x, y = move_action.transform_laser_pan_tilt_to_XY_2D_in_meters(pan=math.radians(PassageCondition.pan_deg), 
+                                                                   tilt=math.radians(PassageCondition.tilt_deg), 
+                                                                   distance=PassageCondition.target_distance)
+
+    return jsonify({'condition': str(passage_condition_result),
+                    'target_distance': str(PassageCondition.target_distance),
+                    'target_x': str(x),
+                    'target_y': str(y)})
+
 
 @app.route('/laser_move', methods=['POST'])
 def pan_tilt_move_route():
@@ -76,6 +122,7 @@ def move_route():
     if result == True:
         return jsonify({}), 200
     return 500
+
 
 @app.route('/base_stop', methods=['POST'])
 def stop_route():
