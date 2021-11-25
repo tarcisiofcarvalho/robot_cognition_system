@@ -62,8 +62,11 @@ class PassageClassificationProcess{
 
             // 5. Publish target path to RVIZ data
             target_path_ = nh_.advertise<PointCloud> ("target_path", 1);
-            
-            // 6. Publish target distance em meters
+
+            // 6. Publish laser_simulated_ray to RVIZ data
+            laser_simulated_ray_ = nh_.advertise<PointCloud> ("laser_simulated_ray", 1);
+
+            // 7. Publish target distance em meters
             pub_target_distance_ = nh_.advertise<std_msgs::Float64> ("target_distance", 1);
         }
     
@@ -237,7 +240,18 @@ class PassageClassificationProcess{
             const boost::shared_ptr<const pcl::PointCloud<pcl::PointXYZRGBA>> cloud = PassageClassificationProcess::upd_data;
             kdtree.setInputCloud (cloud);
 
-            PointCloud::Ptr laser = PassageClassificationProcess::laser_data;
+            // 3. Collect Laser data
+            // 3.1 Real laser
+            // PointCloud::Ptr laser = PassageClassificationProcess::laser_data;
+            // 3.2 Simulated laser from Pan and Tilt data
+            // PointCloud::Ptr laser
+            PointCloud::Ptr laser = PassageClassificationProcess::laser_data = 
+                generate_virtual_ray_laser_data_in_point_cloud(PassageClassificationProcess::laser_pan, 
+                                                               PassageClassificationProcess::laser_pan,
+                                                               std::stod (getenv("LASER_X")), 
+                                                               std::stod (getenv("LASER_Y")), 
+                                                               std::stod (getenv("LASER_Z")));
+            
 
             // 3. Iterate the laser points and search them using kdtree
             pcl::PointCloud<pcl::PointXYZRGBA>::iterator it;
@@ -308,6 +322,37 @@ class PassageClassificationProcess{
 
            printf("classify_passage_condition \n");
            printf("***** Finished ******* \n");
+        }
+
+
+        /*
+          Generate virtual ray laser data in Point Cloud 
+        */
+        
+        PointCloud::Ptr generate_virtual_ray_laser_data_in_point_cloud(double pan, double tilt, double origin_x, double origin_y, double origin_z){
+            
+            // 1. Calculate target point
+            double target_x;
+            double target_y;
+            double target_z;
+
+            target_x = origin_z * cos(pan) / tan(tilt);
+            target_y = origin_z * sin(pan) / tan(tilt);
+            target_z = origin_z * -1;
+
+            // 2. Generate the point cloud ray
+            PointCloud::Ptr cloud = generate_line_points(origin_x, origin_y, origin_z, target_x, target_y, target_z);
+            
+            // 3. Publish the point cloud ray
+            sensor_msgs::PointCloud2 msgcloud;
+            pcl::toROSMsg(*cloud, msgcloud); 
+            std::string tf_frame;
+            tf_frame = "camera_depth_optical_frame";
+            msgcloud.header.frame_id = tf_frame;
+            msgcloud.header.stamp = ros::Time::now();
+            laser_simulated_ray_.publish (msgcloud);
+            return cloud;
+
         }
 
         /*
@@ -506,8 +551,7 @@ class PassageClassificationProcess{
         /*
         * This is a support function to generate a point cloud line points between two points
         */
-        PointCloud::Ptr generate_line_points(float x1, float y1, float z1, 
-                                  float x2, float y2, float z2){
+        PointCloud::Ptr generate_line_points(float x1, float y1, float z1, float x2, float y2, float z2){
 
           pcl::PointXYZRGBA point2;          
           pcl::PointXYZRGB laser_vector_points;
@@ -600,13 +644,14 @@ class PassageClassificationProcess{
         ros::Subscriber sub_laser_orientation_;
         ros::Publisher pub_passage_condition_;
         ros::Publisher target_path_;
+        ros::Publisher laser_simulated_ray_;
         ros::Publisher pub_target_distance_;
         PointCloud::Ptr upd_data;
         PointCloud::Ptr laser_data;
         pcl::KdTreeFLANN<pcl::PointXYZRGBA> kdtree;
         pcl::PointXYZRGBA searchPoint;        
         double laser_pan = 0.0;
-        double laser_tilt = 0.0;
+        double laser_tilt = 0.0;   
   
 };
 

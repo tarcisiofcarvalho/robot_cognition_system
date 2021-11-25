@@ -13,6 +13,8 @@ export MINIMUM_GREEN_POINTS="0.9"
 export ROS_LOOP_RATE="1.5"
 export HEIGHT_THRESHOLD="-0.20"
 export POINT_CLOUD_TO_ROBOT_CENTER="1.58"
-
+export LASER_X="0.50"
+export LASER_Y="-0.20"
+export LASER_Z="0.15"
 # Starting the classifier publisher
 ../../devel/lib/robot_cognition_system/passage_classifier_publisher
