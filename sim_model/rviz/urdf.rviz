@@ -203,12 +203,12 @@ Visualization Manager:
       Unreliable: false
       Value: false
       Visibility:
-        "": true
         "AMCL Particle ": true
         BluePath: true
         Cost Map: true
         Cost Map Grid: true
         Grid: true
+        Laser Ray: true
         LaserScan: true
         Local Path: true
         Map: true
@@ -491,8 +491,8 @@ Visualization Manager:
       Axis: Z
       Channel Name: intensity
       Class: rviz/PointCloud2
-      Color: 255; 255; 255
-      Color Transformer: ""
+      Color: 255; 85; 0
+      Color Transformer: FlatColor
       Decay Time: 0
       Enabled: true
       Invert Rainbow: false
@@ -501,12 +501,12 @@ Visualization Manager:
       Min Color: 0; 0; 0
       Min Intensity: 0
       Name: Laser Ray
-      Position Transformer: ""
+      Position Transformer: XYZ
       Queue Size: 10
       Selectable: true
-      Size (Pixels): 3
-      Size (m): 0.00999999978
-      Style: Flat Squares
+      Size (Pixels): 2
+      Size (m): 1
+      Style: Points
       Topic: /laser_simulated_ray
       Unreliable: false
       Use Fixed Frame: true
@@ -537,25 +537,25 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 3.87936616
+      Distance: 4.40067148
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.0599999987
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: 1.494995
-        Y: 0.345864832
-        Z: 1.10464299
+        X: -0.0184347164
+        Y: -0.0486494713
+        Z: 1.32641208
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.0500000007
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.00999999978
-      Pitch: 0.834796786
+      Pitch: 0.899796665
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 1.66860509
+      Yaw: 1.71360278
     Saved: ~
 Window Geometry:
   Camera:

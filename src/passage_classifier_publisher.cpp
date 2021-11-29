@@ -242,12 +242,12 @@ class PassageClassificationProcess{
 
             // 3. Collect Laser data
             // 3.1 Real laser
-            // PointCloud::Ptr laser = PassageClassificationProcess::laser_data;
+            PointCloud::Ptr laser = PassageClassificationProcess::laser_data;
             // 3.2 Simulated laser from Pan and Tilt data
             // PointCloud::Ptr laser
-            PointCloud::Ptr laser = PassageClassificationProcess::laser_data = 
+            // PointCloud::Ptr laser_temp = 
                 generate_virtual_ray_laser_data_in_point_cloud(PassageClassificationProcess::laser_pan, 
-                                                               PassageClassificationProcess::laser_pan,
+                                                               PassageClassificationProcess::laser_tilt,
                                                                std::stod (getenv("LASER_X")), 
                                                                std::stod (getenv("LASER_Y")), 
                                                                std::stod (getenv("LASER_Z")));
@@ -326,32 +326,68 @@ class PassageClassificationProcess{
 
 
         /*
-          Generate virtual ray laser data in Point Cloud 
+          Generate virtual ray laser data in Point Cloud PointCloud::Ptr
         */
         
-        PointCloud::Ptr generate_virtual_ray_laser_data_in_point_cloud(double pan, double tilt, double origin_x, double origin_y, double origin_z){
+        void generate_virtual_ray_laser_data_in_point_cloud(double pan, double tilt, double origin_x, double origin_y, double origin_z){
             
             // 1. Calculate target point
             double target_x;
             double target_y;
             double target_z;
 
-            target_x = origin_z * cos(pan) / tan(tilt);
-            target_y = origin_z * sin(pan) / tan(tilt);
-            target_z = origin_z * -1;
+            if(pan==0 && tilt==0){
+              target_x = origin_x + 5.0;
+              target_y = 0;
+              target_z = origin_z * -1;
+            }else{
+              pan = ( pan * PI ) / 180 ;
+              pan = ( tilt * PI ) / 180 ;
+              target_x = origin_z * cos(pan) / tan(tilt);
+              target_y = origin_z * sin(pan) / tan(tilt);
+              target_z = origin_z * -1;
+            }
+
+            cout << "***** pan & tilt ******" << endl;
+            cout.precision(dbl::max_digits10);
+            cout << "Pan: " << pan << " - Tilt: " << tilt << endl;
+
+            cout << "***** origin ******" << endl;
+            cout.precision(dbl::max_digits10);
+            cout << "X: " << origin_x << " - Y: " << origin_y << " - Z: " << origin_z << endl;            
+ 
+            cout << "***** target ******" << endl;
+            cout.precision(dbl::max_digits10);
+            cout << "X: " << target_x << " - Y: " << target_y << " - Z: " << target_z << endl; 
 
             // 2. Generate the point cloud ray
             PointCloud::Ptr cloud = generate_line_points(origin_x, origin_y, origin_z, target_x, target_y, target_z);
             
+            PointCloud::Ptr target_cloud (new PointCloud);
+            pcl::PointCloud<pcl::PointXYZRGBA>::iterator it;
+            pcl::PointXYZRGBA point_new;
+            
+            for( it= cloud->begin(); it!= cloud->end(); it++){
+              // Add to the robot path point cloud
+              point_new.x = it->z;
+              point_new.y = it->y*-1;
+              point_new.z = it->x;                       
+              point_new.r = 255;
+              point_new.g = 85;
+              point_new.b = 0;
+              point_new.a = 255;                      
+              target_cloud->push_back(point_new);
+            }     
+
             // 3. Publish the point cloud ray
             sensor_msgs::PointCloud2 msgcloud;
-            pcl::toROSMsg(*cloud, msgcloud); 
+            pcl::toROSMsg(*target_cloud, msgcloud); 
             std::string tf_frame;
             tf_frame = "camera_depth_optical_frame";
             msgcloud.header.frame_id = tf_frame;
             msgcloud.header.stamp = ros::Time::now();
             laser_simulated_ray_.publish (msgcloud);
-            return cloud;
+            // return cloud;
 
         }
 
