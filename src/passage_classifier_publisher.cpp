@@ -56,6 +56,8 @@ class PassageClassificationProcess{
 
             // 3. Subscribe to the Laser orientation data Node
             sub_laser_orientation_ = nh_.subscribe<sensor_msgs::JointState>("/joint_states", 1, &PassageClassificationProcess::laser_data_orientation_callback, this);
+            sub_laser_sim_pan_data_ = nh_.subscribe<std_msgs::Float64>("/laser_sim_pan", 1, &PassageClassificationProcess::laser_sim_pan_data_orientation_callback, this);
+            sub_laser_sim_tilt_data_ = nh_.subscribe<std_msgs::Float64>("/laser_sim_tilt", 1, &PassageClassificationProcess::laser_sim_tilt_data_orientation_callback, this);
 
             // 4. Publish UPD Rviz data
             pub_passage_condition_ = nh_.advertise<std_msgs::String> ("passage_condition", 1);
@@ -246,8 +248,8 @@ class PassageClassificationProcess{
             // 3.2 Simulated laser from Pan and Tilt data
             // PointCloud::Ptr laser
             // PointCloud::Ptr laser_temp = 
-                generate_virtual_ray_laser_data_in_point_cloud(PassageClassificationProcess::laser_pan, 
-                                                               PassageClassificationProcess::laser_tilt,
+                generate_virtual_ray_laser_data_in_point_cloud(PassageClassificationProcess::laser_sim_pan, 
+                                                               PassageClassificationProcess::laser_sim_tilt,
                                                                std::stod (getenv("LASER_X")), 
                                                                std::stod (getenv("LASER_Y")), 
                                                                std::stod (getenv("LASER_Z")));
@@ -335,18 +337,19 @@ class PassageClassificationProcess{
             double target_x;
             double target_y;
             double target_z;
+            double origin_z_temp = origin_z + 0.30;
 
-            if(pan==0 && tilt==0){
-              target_x = origin_x + 5.0;
-              target_y = 0;
-              target_z = origin_z * -1;
-            }else{
-              pan = ( pan * PI ) / 180 ;
-              pan = ( tilt * PI ) / 180 ;
-              target_x = origin_z * cos(pan) / tan(tilt);
-              target_y = origin_z * sin(pan) / tan(tilt);
-              target_z = origin_z * -1;
-            }
+            // if(tilt<0.4){
+            //   target_x = origin_x + 5.0;
+            //   target_y = origin_z * sin(pan) / tan(tilt);
+            //   target_z = origin_z * -1;              
+            // }else{
+            if(tilt==0){tilt = 1;};
+
+            target_x = origin_z_temp * cos(pan) / tan(tilt);
+            target_y = origin_z_temp * sin(pan) / tan(tilt);
+            target_z = origin_z_temp * -1;
+            // }
 
             cout << "***** pan & tilt ******" << endl;
             cout.precision(dbl::max_digits10);
@@ -360,7 +363,16 @@ class PassageClassificationProcess{
             cout.precision(dbl::max_digits10);
             cout << "X: " << target_x << " - Y: " << target_y << " - Z: " << target_z << endl; 
 
+            int rgb [3] = { 255, 85, 0 }; 
+
             // 2. Generate the point cloud ray
+            if((target_x - origin_x)>8.0){
+              target_x = 5.0;
+              rgb[0] = 94;
+              rgb[1] = 94;
+              rgb[2] = 94;
+            }
+
             PointCloud::Ptr cloud = generate_line_points(origin_x, origin_y, origin_z, target_x, target_y, target_z);
             
             PointCloud::Ptr target_cloud (new PointCloud);
@@ -369,21 +381,20 @@ class PassageClassificationProcess{
             
             for( it= cloud->begin(); it!= cloud->end(); it++){
               // Add to the robot path point cloud
-              point_new.x = it->z;
-              point_new.y = it->y*-1;
-              point_new.z = it->x;                       
-              point_new.r = 255;
-              point_new.g = 85;
-              point_new.b = 0;
+              point_new.x = it->x;
+              point_new.y = it->y;
+              point_new.z = it->z;                       
+              point_new.r = rgb[0];
+              point_new.g = rgb[1];
+              point_new.b = rgb[2];
               point_new.a = 255;                      
               target_cloud->push_back(point_new);
             }     
-
             // 3. Publish the point cloud ray
             sensor_msgs::PointCloud2 msgcloud;
             pcl::toROSMsg(*target_cloud, msgcloud); 
             std::string tf_frame;
-            tf_frame = "camera_depth_optical_frame";
+            tf_frame = "base_link";
             msgcloud.header.frame_id = tf_frame;
             msgcloud.header.stamp = ros::Time::now();
             laser_simulated_ray_.publish (msgcloud);
@@ -400,6 +411,24 @@ class PassageClassificationProcess{
           PassageClassificationProcess::laser_pan = msg->position[1];
 
         }
+
+        /*
+        * This function will process the callback for laser sim orientation pan
+        */
+        void laser_sim_pan_data_orientation_callback(const std_msgs::Float64ConstPtr& msg){
+
+          PassageClassificationProcess::laser_sim_pan = msg->data;
+
+        }        
+
+        /*
+        * This function will process the callback for laser sim orientation tilt
+        */
+        void laser_sim_tilt_data_orientation_callback(const std_msgs::Float64ConstPtr& msg){
+
+          PassageClassificationProcess::laser_sim_tilt = msg->data;
+
+        } 
 
         /*
         * This function will calculate the distance from robot to the target point
@@ -678,6 +707,8 @@ class PassageClassificationProcess{
         ros::Subscriber sub_upd_;
         ros::Subscriber sub_laser_data_;
         ros::Subscriber sub_laser_orientation_;
+        ros::Subscriber sub_laser_sim_pan_data_;
+        ros::Subscriber sub_laser_sim_tilt_data_;
         ros::Publisher pub_passage_condition_;
         ros::Publisher target_path_;
         ros::Publisher laser_simulated_ray_;
@@ -687,7 +718,9 @@ class PassageClassificationProcess{
         pcl::KdTreeFLANN<pcl::PointXYZRGBA> kdtree;
         pcl::PointXYZRGBA searchPoint;        
         double laser_pan = 0.0;
-        double laser_tilt = 0.0;   
+        double laser_tilt = 0.0; 
+        double laser_sim_pan = 0.0;
+        double laser_sim_tilt = 0.0;          
   
 };
 

@@ -20,11 +20,15 @@ class PassageCondition():
     tilt_deg = 0
     laser_range = 0
     target_distance = 0
+    pub_laser_pan = None
+    pub_laser_tilt = None
+    pub_laser_pan_sim = None
+    pub_laser_tilt_sim = None    
 
     def __init__(self):
         self.subscriber = rospy.Subscriber("/passage_condition", String, self.passage_classification)
         self.subscriber_laser = rospy.Subscriber("/laser/pointer", LaserScan, self.laser_data)
-        self.subscriber_target_distance = rospy.Subscriber("/target_distance", Float64, self.target_distance_data)
+        self.subscriber_target_distance = rospy.Subscriber("/target_distance", Float64, self.target_distance_data)             
         self.passage_condition = "test"
         self.laser_pan_tilt_set()
         
@@ -41,14 +45,18 @@ class PassageCondition():
 
 
     def laser_pan_tilt_set(self):
-        pub_laser_pan = rospy.Publisher('/r2d2_laser_pan_controller/command', Float64, queue_size=10)
-        pub_laser_tilt = rospy.Publisher('/r2d2_laser_tilt_controller/command', Float64, queue_size=10)
         rate = rospy.Rate(100) # 10000hz
+        PassageCondition.pub_laser_pan = rospy.Publisher('/r2d2_laser_pan_controller/command', Float64, queue_size=10)
+        PassageCondition.pub_laser_tilt = rospy.Publisher('/r2d2_laser_tilt_controller/command', Float64, queue_size=10) 
+        PassageCondition.pub_laser_pan_sim = rospy.Publisher('/laser_sim_pan', Float64, queue_size=10)
+        PassageCondition.pub_laser_tilt_sim = rospy.Publisher('/laser_sim_tilt', Float64, queue_size=10)          
         while not rospy.is_shutdown():
             # rospy.loginfo("Pan_rad: " + str(math.radians(self.pan_deg)))
             # rospy.loginfo("Tilt_rad: " + str(math.radians(self.tilt_deg)))
-            pub_laser_pan.publish(math.radians(self.pan_deg))
-            pub_laser_tilt.publish(math.radians(self.tilt_deg))
+            PassageCondition.pub_laser_pan.publish(math.radians(self.pan_deg))
+            PassageCondition.pub_laser_tilt.publish(math.radians(self.tilt_deg))
+            PassageCondition.pub_laser_pan_sim.publish(math.radians(self.pan_deg))
+            PassageCondition.pub_laser_tilt_sim.publish(math.radians(self.tilt_deg))            
             rate.sleep()
 
 def laser_pan_tilt_distance_to_XY_2D_in_meters(pan=None, tilt=None, distance=None):
