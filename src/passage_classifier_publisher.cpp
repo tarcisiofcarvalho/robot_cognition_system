@@ -225,6 +225,143 @@ class PassageClassificationProcess{
 
         }
 
+        PointCloud::Ptr laser_data_transform(const PointCloud::ConstPtr msg){
+
+
+            // 0. Reset laser data processing status
+            // PassageClassificationProcess::laser_data_ready = false;
+
+            printf("***** Laser Run - start ******\n");
+            // 1. Casting the laser point cloud object
+            PointCloud::Ptr laser_data_raw = boost::const_pointer_cast<PointCloud>(msg);
+
+            // 2. Translation matrix definition for laser 
+            // point frame to kinect frame
+            Eigen::Matrix<float, 4, 4> translationMatrix;
+
+            translationMatrix(0,0) = 1;
+            translationMatrix(0,1) = 0;
+            translationMatrix(0,2) = 0;
+            translationMatrix(0,3) = std::stof (getenv("LASER_TO_KINECT_X"));
+
+            translationMatrix(1,0) = 0;
+            translationMatrix(1,1) = 1;
+            translationMatrix(1,2) = 0;
+            translationMatrix(1,3) = std::stof (getenv("LASER_TO_KINECT_Y"));;
+
+            translationMatrix(2,0) = 0;
+            translationMatrix(2,1) = 0;
+            translationMatrix(2,2) = 1;
+            translationMatrix(2,3) = std::stof (getenv("LASER_TO_KINECT_Z"));;    
+
+            translationMatrix(3,0) = 0;
+            translationMatrix(3,1) = 0;
+            translationMatrix(3,2) = 0;
+            translationMatrix(3,3) = 1;
+          
+            pcl::transformPointCloud(*laser_data_raw, *laser_data_raw, translationMatrix);
+
+            // 4. Rotation matrix definition for laser pan & tilt
+            Eigen::Matrix<float, 4, 4> tiltRotationMatrix;
+
+            // Getting laser pan tilt
+            double tilt = PassageClassificationProcess::laser_sim_tilt;
+            double pan = PassageClassificationProcess::laser_sim_pan;
+
+            // Z (Tilt)
+            tiltRotationMatrix(0,0) = cos(-1 * tilt);
+            tiltRotationMatrix(0,1) = -sin(-1 * tilt);
+            tiltRotationMatrix(0,2) = 0;
+            tiltRotationMatrix(0,3) = 0;
+
+            tiltRotationMatrix(1,0) = sin(-1 * tilt);
+            tiltRotationMatrix(1,1) = cos(-1 * tilt);
+            tiltRotationMatrix(1,2) = 0;
+            tiltRotationMatrix(1,3) = 0;
+
+            tiltRotationMatrix(2,0) = 0;
+            tiltRotationMatrix(2,1) = 0;
+            tiltRotationMatrix(2,2) = 1;
+            tiltRotationMatrix(2,3) = 0;  
+
+            tiltRotationMatrix(3,0) = 0;
+            tiltRotationMatrix(3,1) = 0;
+            tiltRotationMatrix(3,2) = 0;
+            tiltRotationMatrix(3,3) = 1;
+
+            // Tilt Transformation
+            pcl::transformPointCloud(*laser_data_raw, *laser_data_raw, tiltRotationMatrix);
+            
+            // Y (Pan)
+            Eigen::Matrix<float, 4, 4> panRotationMatrix;
+
+            panRotationMatrix(0,0) = cos(pan);
+            panRotationMatrix(0,1) = 0;
+            panRotationMatrix(0,2) = sin(pan);
+            panRotationMatrix(0,3) = 0;
+
+            panRotationMatrix(1,0) = 0;
+            panRotationMatrix(1,1) = 1;
+            panRotationMatrix(1,2) = 0;
+            panRotationMatrix(1,3) = 0;
+
+            panRotationMatrix(2,0) = -sin(pan);
+            panRotationMatrix(2,1) = 0;
+            panRotationMatrix(2,2) = cos(pan);;
+            panRotationMatrix(2,3) = 0;  
+
+            panRotationMatrix(3,0) = 0;
+            panRotationMatrix(3,1) = 0;
+            panRotationMatrix(3,2) = 0;
+            panRotationMatrix(3,3) = 1;
+
+            // Pan Transformation
+            pcl::transformPointCloud(*laser_data_raw, *laser_data_raw, panRotationMatrix);
+
+
+            // 3.6 Vox grid reduction
+            pcl::VoxelGrid<pcl::PointXYZRGBA> sor; 
+            sor.setInputCloud (laser_data_raw);
+            sor.setLeafSize (std::stof(getenv("VOX_GRID_LEAF_X")), std::stof(getenv("VOX_GRID_LEAF_Y")), std::stof(getenv("VOX_GRID_LEAF_Z")));
+            PointCloud::Ptr laser_data_filtered (new PointCloud);
+            sor.filter (*laser_data_filtered);
+
+            // Set laser data process to ready
+            PassageClassificationProcess::laser_data_ready = true;
+            printf("laser_callback \n");
+            return laser_data_filtered;
+            
+
+
+            // TFC cout.precision(dbl::max_digits10);
+            // TFC cout << "Pan: " << pan << endl;
+            // TFC cout << "Tilt: " << tilt << endl;
+            // TFC printf("***** Laser Run - finish ******\n");
+
+            // 4. Include laser data into kinect UPD processed data
+            // if( PassageClassificationProcess::upd_data_ready==true){
+            //     // PointCloud::Ptr upd_temp = PassageClassificationProcess::upd_data;
+            //     // pcl::PointXYZRGBA point2;
+            //     // pcl::PointCloud<pcl::PointXYZRGBA>::iterator it2;
+
+            //     // for( it2= laser_data_filtered->begin(); it2!= laser_data_filtered->end(); it2++){
+            //     //     point2.x = it2->z;
+            //     //     point2.y = it2->y;
+            //     //     point2.z = -it2->x;
+            //     //     point2.r = 0;
+            //     //     point2.g = 0;
+            //     //     point2.b = 254;
+            //     //     point2.a = 255;
+            //     //     upd_temp->push_back(point2);
+            //     // }
+
+            //     if (!viewer2.wasStopped()){
+            //         viewer2.showCloud (PassageClassificationProcess::upd_data);
+            //     }
+            // }
+
+        }        
+
         /*
         * This function classify if the laser is pointing to a location that robot is 
         * not able to pass, based on upd cloud. It will publish a ROS publisher with
@@ -243,16 +380,25 @@ class PassageClassificationProcess{
             kdtree.setInputCloud (cloud);
 
             // 3. Collect Laser data
-            // 3.1 Real laser
-            PointCloud::Ptr laser = PassageClassificationProcess::laser_data;
-            // 3.2 Simulated laser from Pan and Tilt data
-            // PointCloud::Ptr laser
-            // PointCloud::Ptr laser_temp = 
-                generate_virtual_ray_laser_data_in_point_cloud(PassageClassificationProcess::laser_sim_pan, 
+            PointCloud::Ptr laser;
+            if(std::string (getenv("LASER_TYPE")) == "simulated"){
+              // 3.1 Simulated laser from Pan and Tilt data
+              laser = laser_data_transform(generate_virtual_ray_laser_data_in_point_cloud(PassageClassificationProcess::laser_sim_pan, 
                                                                PassageClassificationProcess::laser_sim_tilt,
                                                                std::stod (getenv("LASER_X")), 
                                                                std::stod (getenv("LASER_Y")), 
-                                                               std::stod (getenv("LASER_Z")));
+                                                               std::stod (getenv("LASER_Z"))));
+                  sensor_msgs::PointCloud2 msgcloud;
+                  pcl::toROSMsg(*laser, msgcloud); 
+                  std::string tf_frame;
+                  tf_frame = "camera_depth_optical_frame";
+                  msgcloud.header.frame_id = tf_frame;
+                  msgcloud.header.stamp = ros::Time::now();
+                  laser_simulated_ray_.publish (msgcloud);
+            }else{
+              // 3.2 Real laser
+              laser = PassageClassificationProcess::laser_data;
+            }
             
 
             // 3. Iterate the laser points and search them using kdtree
@@ -331,13 +477,13 @@ class PassageClassificationProcess{
           Generate virtual ray laser data in Point Cloud PointCloud::Ptr
         */
         
-        void generate_virtual_ray_laser_data_in_point_cloud(double pan, double tilt, double origin_x, double origin_y, double origin_z){
+        PointCloud::Ptr generate_virtual_ray_laser_data_in_point_cloud(double pan, double tilt, double origin_x, double origin_y, double origin_z){
             
             // 1. Calculate target point
             double target_x;
             double target_y;
             double target_z;
-            double origin_z_temp = origin_z + 0.30;
+            double origin_z_calc = origin_z + std::stod (getenv("LASER_Z_GAP"));
 
             // if(tilt<0.4){
             //   target_x = origin_x + 5.0;
@@ -346,9 +492,9 @@ class PassageClassificationProcess{
             // }else{
             if(tilt==0){tilt = 1;};
 
-            target_x = origin_z_temp * cos(pan) / tan(tilt);
-            target_y = origin_z_temp * sin(pan) / tan(tilt);
-            target_z = origin_z_temp * -1;
+            target_x = origin_z_calc * cos(pan) / tan(tilt);
+            target_y = origin_z_calc * sin(pan) / tan(tilt);
+            target_z = origin_z_calc * -1;
             // }
 
             cout << "***** pan & tilt ******" << endl;
@@ -391,14 +537,14 @@ class PassageClassificationProcess{
               target_cloud->push_back(point_new);
             }     
             // 3. Publish the point cloud ray
-            sensor_msgs::PointCloud2 msgcloud;
-            pcl::toROSMsg(*target_cloud, msgcloud); 
-            std::string tf_frame;
-            tf_frame = "base_link";
-            msgcloud.header.frame_id = tf_frame;
-            msgcloud.header.stamp = ros::Time::now();
-            laser_simulated_ray_.publish (msgcloud);
-            // return cloud;
+            // sensor_msgs::PointCloud2 msgcloud;
+            // pcl::toROSMsg(*target_cloud, msgcloud); 
+            // std::string tf_frame;
+            // tf_frame = "base_link";
+            // msgcloud.header.frame_id = tf_frame;
+            // msgcloud.header.stamp = ros::Time::now();
+            // laser_simulated_ray_.publish (msgcloud);
+            return target_cloud;
 
         }
 
