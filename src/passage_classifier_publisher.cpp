@@ -261,62 +261,62 @@ class PassageClassificationProcess{
           
             pcl::transformPointCloud(*laser_data_raw, *laser_data_raw, translationMatrix);
 
-            // 4. Rotation matrix definition for laser pan & tilt
-            Eigen::Matrix<float, 4, 4> tiltRotationMatrix;
+            // // 4. Rotation matrix definition for laser pan & tilt
+            // Eigen::Matrix<float, 4, 4> tiltRotationMatrix;
 
-            // Getting laser pan tilt
-            double tilt = PassageClassificationProcess::laser_sim_tilt;
-            double pan = PassageClassificationProcess::laser_sim_pan;
+            // // Getting laser pan tilt
+            // double tilt = PassageClassificationProcess::laser_sim_tilt;
+            // double pan = PassageClassificationProcess::laser_sim_pan;
 
-            // Z (Tilt)
-            tiltRotationMatrix(0,0) = cos(-1 * tilt);
-            tiltRotationMatrix(0,1) = -sin(-1 * tilt);
-            tiltRotationMatrix(0,2) = 0;
-            tiltRotationMatrix(0,3) = 0;
+            // // Z (Tilt)
+            // tiltRotationMatrix(0,0) = cos(-1 * tilt);
+            // tiltRotationMatrix(0,1) = -sin(-1 * tilt);
+            // tiltRotationMatrix(0,2) = 0;
+            // tiltRotationMatrix(0,3) = 0;
 
-            tiltRotationMatrix(1,0) = sin(-1 * tilt);
-            tiltRotationMatrix(1,1) = cos(-1 * tilt);
-            tiltRotationMatrix(1,2) = 0;
-            tiltRotationMatrix(1,3) = 0;
+            // tiltRotationMatrix(1,0) = sin(-1 * tilt);
+            // tiltRotationMatrix(1,1) = cos(-1 * tilt);
+            // tiltRotationMatrix(1,2) = 0;
+            // tiltRotationMatrix(1,3) = 0;
 
-            tiltRotationMatrix(2,0) = 0;
-            tiltRotationMatrix(2,1) = 0;
-            tiltRotationMatrix(2,2) = 1;
-            tiltRotationMatrix(2,3) = 0;  
+            // tiltRotationMatrix(2,0) = 0;
+            // tiltRotationMatrix(2,1) = 0;
+            // tiltRotationMatrix(2,2) = 1;
+            // tiltRotationMatrix(2,3) = 0;  
 
-            tiltRotationMatrix(3,0) = 0;
-            tiltRotationMatrix(3,1) = 0;
-            tiltRotationMatrix(3,2) = 0;
-            tiltRotationMatrix(3,3) = 1;
+            // tiltRotationMatrix(3,0) = 0;
+            // tiltRotationMatrix(3,1) = 0;
+            // tiltRotationMatrix(3,2) = 0;
+            // tiltRotationMatrix(3,3) = 1;
 
-            // Tilt Transformation
-            pcl::transformPointCloud(*laser_data_raw, *laser_data_raw, tiltRotationMatrix);
+            // // Tilt Transformation
+            // pcl::transformPointCloud(*laser_data_raw, *laser_data_raw, tiltRotationMatrix);
             
-            // Y (Pan)
-            Eigen::Matrix<float, 4, 4> panRotationMatrix;
+            // // Y (Pan)
+            // Eigen::Matrix<float, 4, 4> panRotationMatrix;
 
-            panRotationMatrix(0,0) = cos(pan);
-            panRotationMatrix(0,1) = 0;
-            panRotationMatrix(0,2) = sin(pan);
-            panRotationMatrix(0,3) = 0;
+            // panRotationMatrix(0,0) = cos(pan);
+            // panRotationMatrix(0,1) = 0;
+            // panRotationMatrix(0,2) = sin(pan);
+            // panRotationMatrix(0,3) = 0;
 
-            panRotationMatrix(1,0) = 0;
-            panRotationMatrix(1,1) = 1;
-            panRotationMatrix(1,2) = 0;
-            panRotationMatrix(1,3) = 0;
+            // panRotationMatrix(1,0) = 0;
+            // panRotationMatrix(1,1) = 1;
+            // panRotationMatrix(1,2) = 0;
+            // panRotationMatrix(1,3) = 0;
 
-            panRotationMatrix(2,0) = -sin(pan);
-            panRotationMatrix(2,1) = 0;
-            panRotationMatrix(2,2) = cos(pan);;
-            panRotationMatrix(2,3) = 0;  
+            // panRotationMatrix(2,0) = -sin(pan);
+            // panRotationMatrix(2,1) = 0;
+            // panRotationMatrix(2,2) = cos(pan);;
+            // panRotationMatrix(2,3) = 0;  
 
-            panRotationMatrix(3,0) = 0;
-            panRotationMatrix(3,1) = 0;
-            panRotationMatrix(3,2) = 0;
-            panRotationMatrix(3,3) = 1;
+            // panRotationMatrix(3,0) = 0;
+            // panRotationMatrix(3,1) = 0;
+            // panRotationMatrix(3,2) = 0;
+            // panRotationMatrix(3,3) = 1;
 
-            // Pan Transformation
-            pcl::transformPointCloud(*laser_data_raw, *laser_data_raw, panRotationMatrix);
+            // // Pan Transformation
+            // pcl::transformPointCloud(*laser_data_raw, *laser_data_raw, panRotationMatrix);
 
 
             // 3.6 Vox grid reduction
@@ -388,13 +388,14 @@ class PassageClassificationProcess{
                                                                std::stod (getenv("LASER_X")), 
                                                                std::stod (getenv("LASER_Y")), 
                                                                std::stod (getenv("LASER_Z"))));
-                  sensor_msgs::PointCloud2 msgcloud;
-                  pcl::toROSMsg(*laser, msgcloud); 
-                  std::string tf_frame;
-                  tf_frame = "camera_depth_optical_frame";
-                  msgcloud.header.frame_id = tf_frame;
-                  msgcloud.header.stamp = ros::Time::now();
-                  laser_simulated_ray_.publish (msgcloud);
+                                                              //  
+                  // sensor_msgs::PointCloud2 msgcloud;
+                  // pcl::toROSMsg(*laser, msgcloud); 
+                  // std::string tf_frame;
+                  // tf_frame = "camera_depth_optical_frame";
+                  // msgcloud.header.frame_id = tf_frame;
+                  // msgcloud.header.stamp = ros::Time::now();
+                  // laser_simulated_ray_.publish (msgcloud);
             }else{
               // 3.2 Real laser
               laser = PassageClassificationProcess::laser_data;
@@ -406,6 +407,7 @@ class PassageClassificationProcess{
 
             // Good point for passage condition counter
             float greenCount = 0;
+            float redCount = 0;
             float notGreenCount = 0;
             float total = 0;
 
@@ -414,7 +416,7 @@ class PassageClassificationProcess{
 
               // Note: Changing the axis to be compatible with kinect axis data
               searchPoint.x = it->z; // z to x
-              searchPoint.y = it->y;
+              searchPoint.y = -it->y;
               searchPoint.z = -it->x; // x to z
                     //cout.precision(dbl::max_digits10);
                    // cout << "z: " << searchPoint.z << endl;
@@ -439,6 +441,9 @@ class PassageClassificationProcess{
                   ){
                     greenCount++;
                   }
+                  if(cloud->points[ pointIdxNKNSearch[i]].r==255){
+                    redCount++;
+                  }                  
                 }
               }
 
@@ -447,6 +452,7 @@ class PassageClassificationProcess{
             // 5. Determine the passage condition
             std_msgs::String msg;
 
+            
             if((greenCount / total) >= std::stof (getenv("MINIMUM_GREEN_POINTS"))){
               if(classifier_ready == true){
                 generate_path_line();
@@ -537,13 +543,13 @@ class PassageClassificationProcess{
               target_cloud->push_back(point_new);
             }     
             // 3. Publish the point cloud ray
-            // sensor_msgs::PointCloud2 msgcloud;
-            // pcl::toROSMsg(*target_cloud, msgcloud); 
-            // std::string tf_frame;
-            // tf_frame = "base_link";
-            // msgcloud.header.frame_id = tf_frame;
-            // msgcloud.header.stamp = ros::Time::now();
-            // laser_simulated_ray_.publish (msgcloud);
+            sensor_msgs::PointCloud2 msgcloud;
+            pcl::toROSMsg(*target_cloud, msgcloud); 
+            std::string tf_frame;
+            tf_frame = "base_link";
+            msgcloud.header.frame_id = tf_frame;
+            msgcloud.header.stamp = ros::Time::now();
+            laser_simulated_ray_.publish (msgcloud);
             return target_cloud;
 
         }
