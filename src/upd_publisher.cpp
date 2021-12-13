@@ -220,6 +220,8 @@ class UPDProcess{
 
             // 3. Publish UPD Rviz data
             pub_upd_rviz_ = nh_.advertise<sensor_msgs::PointCloud2> ("upd_point_cloud_classification_rviz", 1);
+            pub_upd_rviz_base_1_ = nh_.advertise<sensor_msgs::PointCloud2> ("upd_point_cloud_classification_rviz_base_1", 1);
+            pub_upd_rviz_base_2_ = nh_.advertise<sensor_msgs::PointCloud2> ("upd_point_cloud_classification_rviz_base_2", 1);
         }
     
         void callback(const PointCloud::ConstPtr& msg){
@@ -317,64 +319,18 @@ class UPDProcess{
             pub_upd_rviz_.publish (msgcloud);
 
 
-            // 10. Transform/Rotate UPD data
-            // Rotation
-            Eigen::Matrix4f eRot;
-            Eigen::Quaternionf PCRot;
-            Eigen::Vector3f PCTrans;
-            Eigen::Matrix<float, 4, 4> rotMatrix;
-
-            // Counterclockwise rotation around y axis
-            rotMatrix(0,0) = cos(-PI);
-            rotMatrix(0,1) = 0;
-            rotMatrix(0,2) = sin(-PI);
-            rotMatrix(0,3) = 0;
-
-            rotMatrix(1,0) = 0;
-            rotMatrix(1,1) = 1;
-            rotMatrix(1,2) = 0;
-            rotMatrix(1,3) = 0;
-
-            rotMatrix(2,0) = -sin(-PI);
-            rotMatrix(2,1) = 0;
-            rotMatrix(2,2) = cos(-PI);
-            rotMatrix(2,3) = 0;    
-
-            rotMatrix(3,0) = 0;
-            rotMatrix(3,1) = 0;
-            rotMatrix(3,2) = 0;
-            rotMatrix(3,3) = 1;
-
-            
-            pcl::transformPointCloud(*m_cloud_color_UPD, *m_cloud_color_UPD, rotMatrix);
-
-            // Clockwise rotation around z axis
-            rotMatrix(0,0) = cos(-PI);
-            rotMatrix(0,1) = -sin(-PI);
-            rotMatrix(0,2) = 0;
-            rotMatrix(0,3) = 0;
-
-            rotMatrix(1,0) = sin(-PI);
-            rotMatrix(1,1) = cos(-PI);
-            rotMatrix(1,2) = 0;
-            rotMatrix(1,3) = 0;
-
-            rotMatrix(2,0) = 0;
-            rotMatrix(2,1) = 0;
-            rotMatrix(2,2) = 1;
-            rotMatrix(2,3) = 0;    
-
-            rotMatrix(3,0) = 0;
-            rotMatrix(3,1) = 0;
-            rotMatrix(3,2) = 0;
-            rotMatrix(3,3) = 1;
-
-            
-            pcl::transformPointCloud(*m_cloud_color_UPD, *m_cloud_color_UPD, rotMatrix);
-
             
             // 11. Publish the UPD classified point clouds
-            pub_upd_.publish (m_cloud_color_UPD);
+            upd_temp = transform_kinect_to_base(upd_temp);
+            pub_upd_.publish (upd_temp);
+            
+            sensor_msgs::PointCloud2 msgcloud2;
+            pcl::toROSMsg(*upd_temp, msgcloud2); 
+            tf_frame = "base_link";
+            // nh_.param("frame_id", tf_frame, std::string("/base_link"));
+            msgcloud2.header.frame_id = tf_frame;
+            msgcloud2.header.stamp = ros::Time::now();
+            pub_upd_rviz_base_2_.publish (msgcloud2);
 
             delete m_upd;
 
@@ -384,12 +340,116 @@ class UPDProcess{
 
         }
 
+        PointCloudRGB::Ptr transform_kinect_to_base(PointCloudRGB::Ptr cloud){
+
+
+            // 9. Publish the UPD classified point clouds to Rviz
+            PointCloudRGB::Ptr cloud_temp (new PointCloudRGB);
+            pcl::PointXYZRGB point_temp;
+            pcl::PointCloud<pcl::PointXYZRGB>::iterator it2;
+            for( it2= cloud->begin(); it2!= cloud->end(); it2++){
+                point_temp.x = it2->z;
+                point_temp.y = -it2->x;
+                point_temp.z = -it2->y;
+                point_temp.r = it2->r;
+                point_temp.g = it2->g;
+                point_temp.b = it2->b;
+                cloud_temp->push_back(point_temp);
+            }
+
+            // Translate to base frame
+            Eigen::Matrix<float, 4, 4> translationMatrix;
+
+            translationMatrix(0,0) = 1;
+            translationMatrix(0,1) = 0;
+            translationMatrix(0,2) = 0;
+            translationMatrix(0,3) = std::stof (getenv("KINECT_TO_BASE_X"));
+
+            translationMatrix(1,0) = 0;
+            translationMatrix(1,1) = 1;
+            translationMatrix(1,2) = 0;
+            translationMatrix(1,3) = std::stof (getenv("KINECT_TO_BASE_Y"));;
+
+            translationMatrix(2,0) = 0;
+            translationMatrix(2,1) = 0;
+            translationMatrix(2,2) = 1;
+            translationMatrix(2,3) = std::stof (getenv("KINECT_TO_BASE_Z"));;    
+
+            translationMatrix(3,0) = 0;
+            translationMatrix(3,1) = 0;
+            translationMatrix(3,2) = 0;
+            translationMatrix(3,3) = 1;
+          
+            pcl::transformPointCloud(*cloud_temp, *cloud_temp, translationMatrix);
+
+            // // Rotate to base frame
+            // Eigen::Matrix4f eRot;
+            // Eigen::Quaternionf PCRot;
+            // Eigen::Vector3f PCTrans;
+            // Eigen::Matrix<float, 4, 4> rotMatrix;
+
+            // // Counterclockwise rotation around y axis
+            // rotMatrix(0,0) = cos(PI);
+            // rotMatrix(0,1) = 0;
+            // rotMatrix(0,2) = sin(PI);
+            // rotMatrix(0,3) = 0;
+
+            // rotMatrix(1,0) = 0;
+            // rotMatrix(1,1) = 1;
+            // rotMatrix(1,2) = 0;
+            // rotMatrix(1,3) = 0;
+
+            // rotMatrix(2,0) = -sin(PI);
+            // rotMatrix(2,1) = 0;
+            // rotMatrix(2,2) = cos(PI);
+            // rotMatrix(2,3) = 0;    
+
+            // rotMatrix(3,0) = 0;
+            // rotMatrix(3,1) = 0;
+            // rotMatrix(3,2) = 0;
+            // rotMatrix(3,3) = 1;
+
+            
+            // pcl::transformPointCloud(*cloud, *cloud, rotMatrix);
+
+
+            // // Counterclockwise rotation around z axis
+            // rotMatrix(0,0) = cos(-PI);
+            // rotMatrix(0,1) = -sin(-PI);
+            // rotMatrix(0,2) = 0;
+            // rotMatrix(0,3) = 0;
+
+            // rotMatrix(1,0) = sin(-PI);
+            // rotMatrix(1,1) = cos(-PI);
+            // rotMatrix(1,2) = 0;
+            // rotMatrix(1,3) = 0;
+
+            // rotMatrix(2,0) = 0;
+            // rotMatrix(2,1) = 0;
+            // rotMatrix(2,2) = 1;
+            // rotMatrix(2,3) = 0;    
+
+            // rotMatrix(3,0) = 0;
+            // rotMatrix(3,1) = 0;
+            // rotMatrix(3,2) = 0;
+            // rotMatrix(3,3) = 1;
+
+            
+            // pcl::transformPointCloud(*cloud, *cloud, rotMatrix);
+
+            return cloud_temp;
+
+        }
+
     private:
         ros::NodeHandle nh_;
         ros::Subscriber sub_kinect_;
         ros::Publisher pub_upd_;
         ros::Publisher pub_upd_rviz_;
+        ros::Publisher pub_upd_rviz_base_1_;
+        ros::Publisher pub_upd_rviz_base_2_;
 };
+
 
 
 int main(int argc, char** argv){
