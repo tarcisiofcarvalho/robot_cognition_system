@@ -8,6 +8,7 @@ import math
 import move_to_target as move_action
 import time
 from sensor_msgs.msg import LaserScan 
+from robot_cognition_system.srv import DiodeLaserService, DiodeLaserServiceResponse
 
 passage_condition_result = "test"
 
@@ -53,11 +54,25 @@ class PassageCondition():
         while not rospy.is_shutdown():
             # rospy.loginfo("Pan_rad: " + str(math.radians(self.pan_deg)))
             # rospy.loginfo("Tilt_rad: " + str(math.radians(self.tilt_deg)))
+            diode_laser_action(cmd_name="pan",cmd_value=str(self.pan_deg))
+            diode_laser_action(cmd_name="tilt",cmd_value=str(self.tilt_deg))
             PassageCondition.pub_laser_pan.publish(math.radians(self.pan_deg))
             PassageCondition.pub_laser_tilt.publish(math.radians(self.tilt_deg))
             PassageCondition.pub_laser_pan_sim.publish(math.radians(self.pan_deg))
-            PassageCondition.pub_laser_tilt_sim.publish(math.radians(self.tilt_deg))            
+            PassageCondition.pub_laser_tilt_sim.publish(math.radians(self.tilt_deg))  
+
             rate.sleep()
+
+
+def diode_laser_action(cmd_name, cmd_value):
+    rospy.wait_for_service('diode_laser_service')
+    try:
+        diode_service = rospy.ServiceProxy('diode_laser_service', DiodeLaserService)
+        resp1 = diode_service(cmd_name, cmd_value)
+        print(resp1)
+    except rospy.ServiceException as e:
+        print("Service call failed: %s"%e)
+
 
 def laser_pan_tilt_distance_to_XY_2D_in_meters(pan=None, tilt=None, distance=None):
     """
@@ -157,6 +172,7 @@ if __name__ == '__main__':
     # ROS Start - Run in the main thread
     rospy.init_node("web_app")
     pc = PassageCondition()
+    
     rospy.spin()
     
 

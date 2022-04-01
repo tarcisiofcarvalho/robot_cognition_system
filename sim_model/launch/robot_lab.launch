@@ -1,0 +1,71 @@
+<launch>
+  <!-- <arg name="model" default="$(find robot_cognition_system)/sim_model/urdf/sim_model.urdf.xacro"/> -->
+  <!-- <arg name="model" default="$(find robot_cognition_system)/sim_model/urdf/sim_caster.urdf.xacro"/> -->
+  <arg name="rvizconfig" default="$(find robot_cognition_system)/sim_model/rviz/urdf_lab.rviz" />
+
+  <!-- <include file="$(find robot_cognition_system)/sim_model/launch/gazebo.launch">
+    <arg name="model" value="$(arg model)" />
+  </include> -->
+
+  <!-- <include file="$(find robot_cognition_system)/sim_model/launch/includes/gmapping.launch.xml"/> -->
+
+  <node name="rviz" pkg="rviz" type="rviz" args="-d $(arg rvizconfig)" />
+
+  <!-- Node to convert Depth sensor point cloud data to laser range data-->
+  <!-- <node pkg="nodelet" type="nodelet" name="laserscan_nodelet_manager" args="manager"/> 
+  <node pkg="nodelet" type="nodelet" name="depthimage_to_laserscan" 
+        args="load depthimage_to_laserscan/DepthImageToLaserScanNodelet laserscan_nodelet_manager"> 
+    <param name="scan_height" value="10"/> 
+    <param name="output_frame_id" value="/camera_depth_frame"/> 
+    <param name="range_min" value="0.45"/> 
+    <remap from="image" to="/camera/depth/image_raw"/> 
+    <remap from="scan" to="/scan"/> 
+  </node>  -->
+
+  <!-- Localization -->
+  <!-- <arg name="initial_pose_x" default="0.0"/>
+  <arg name="initial_pose_y" default="0.0"/>
+  <arg name="initial_pose_a" default="0.0"/>
+  <include file="$(find robot_cognition_system)/sim_model/launch/includes/amcl.launch.xml">
+    <arg name="initial_pose_x" value="$(arg initial_pose_x)"/>
+    <arg name="initial_pose_y" value="$(arg initial_pose_y)"/>
+    <arg name="initial_pose_a" value="$(arg initial_pose_a)"/>
+  </include> -->
+
+  <!-- Move base -->
+  <!-- <include file="$(find robot_cognition_system)/sim_model/launch/includes/move_base.launch.xml"/>
+
+  <rosparam command="load"
+            file="$(find robot_cognition_system)/sim_model/config/joints.yaml"
+            ns="r2d2_joint_state_controller" />
+  <rosparam command="load"
+            file="$(find robot_cognition_system)/sim_model/config/diffdrive.yaml"
+            ns="r2d2_diff_drive_controller" />
+
+  <rosparam command="load"
+            file="$(find robot_cognition_system)/sim_model/config/laser_tilt.yaml"
+            ns="r2d2_laser_tilt_controller" />
+
+    <rosparam command="load"
+            file="$(find robot_cognition_system)/sim_model/config/laser_pan.yaml"
+            ns="r2d2_laser_pan_controller" />          
+
+  <node name="r2d2_controller_spawner" pkg="controller_manager" type="spawner" 
+    args="r2d2_joint_state_controller
+          r2d2_diff_drive_controller
+          r2d2_laser_tilt_controller
+          r2d2_laser_pan_controller"/>
+
+  <node name="joint_state_publisher"
+        pkg="joint_state_publisher"
+        type="joint_state_publisher">
+    <param name="use_gui" value="false"/>
+  </node> -->
+
+  <!-- Gazebo PID for joints-->
+  <!-- <rosparam file="$(find robot_cognition_system)/sim_model/config/gazebo_ros_control_params.yaml" command="load"/> -->
+
+  <node name="rqt_robot_steering" pkg="rqt_robot_steering" type="rqt_robot_steering">
+    <param name="default_topic" value="/r2d2_diff_drive_controller/cmd_vel"/>
+  </node>
+</launch>

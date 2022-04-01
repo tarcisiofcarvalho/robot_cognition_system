@@ -915,7 +915,7 @@ int main(int argc, char** argv){
       // std::cout << std::boolalpha;   
       // std::cout<<pcProcess.laser_data_ready<<"\n"; 
       // std::cout<<pcProcess.upd_data_ready<<"\n"; 
-      if(pcProcess.laser_data_ready == true && pcProcess.upd_data_ready == true){
+      if((pcProcess.laser_data_ready == true || std::string (getenv("LASER_TYPE")) == "simulated") && pcProcess.upd_data_ready == true){
         pcProcess.classify_passage_condition();  
       }
       ros::spinOnce();

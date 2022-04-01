@@ -4,7 +4,7 @@ int servo_pan_pin = 9;
 int servo_tilt_pin = 6;
 
 int servo_pan_start = (80);
-int servo_tilt_start = (100);
+int servo_tilt_start = (3);
 
 int servo_pan_current = servo_pan_start;
 int servo_tilt_current = servo_tilt_start;
@@ -22,6 +22,7 @@ void setup() {
   pinMode(13,OUTPUT); // configures the onboard led as output
   pinMode(4,OUTPUT); // Laser led pin (red)
   pinMode(2,OUTPUT); // Led (green)
+  pinMode(12,OUTPUT); // Led (green)
   
   // 2. Pan servo setup
   servoPan.attach(servo_pan_pin);
@@ -47,6 +48,11 @@ void loop() {
       // ----------------------------------------- //
       String serial_data;
       serial_data = Serial.readString();
+//      if(serial_data == "1"){
+//        digitalWrite(12,HIGH);
+//      }else{
+//        digitalWrite(12,LOW);
+//      }
       if(serial_data.startsWith("pan_")){
         digitalWrite(13,HIGH);
         serial_data.replace("pan_","");
@@ -71,7 +77,7 @@ void loop() {
       // ----------------------------------------- //      
       servoPan.write(servo_pan_current);
       servoTilt.write(servo_tilt_current);
-      delay(100);
+      delay(10);
       
     }
     

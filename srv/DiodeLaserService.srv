@@ -1,0 +1,4 @@
+string service_command_name
+string service_command_value
+---
+bool service_response
