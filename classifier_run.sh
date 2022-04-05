@@ -16,10 +16,10 @@ export POINT_CLOUD_TO_ROBOT_CENTER="1.80"
 # export LASER_X="0.0"
 # export LASER_Y="0.0"
 # export LASER_Z="0.0"
-export LASER_X="0.50"
-export LASER_Y="-0.20"
-export LASER_Z="0.15"
-export LASER_Z_GAP="0.35"
+export LASER_X="-0.25" # 0.5
+export LASER_Y="-0.25" # -0.20
+export LASER_Z="1.45" # 0.15
+export LASER_Z_GAP="0.0" # 0.35
 export GENERATE_PATH_LINE_K="12"
 export LASER_TYPE="simulated"
 # Starting the classifier publisher

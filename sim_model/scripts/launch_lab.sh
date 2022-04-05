@@ -13,6 +13,10 @@ clear
 # roslaunch robot_cognition_system display.launch model:=../urdf/08-macroed.urdf.xacro
 # roslaunch robot_cognition_system gazebo.launch
 # roslaunch robot_cognition_system display.launch model:=../urdf/sim_model.urdf.xacro
-# roslaunch openni_launch openni.launch
 # rosrun rviz rviz
-roslaunch robot_cognition_system robot_lab.launch
+roslaunch openni_launch openni.launch &
+roslaunch robot_cognition_system robot_lab.launch &
+# ../../upd_run.sh &
+# ../../classifier_run.sh &
+# python ../src/diode_laser_service.py &
+# python ../src/web_app.py

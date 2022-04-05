@@ -383,36 +383,40 @@ class UPDProcess{
             pcl::transformPointCloud(*cloud_temp, *cloud_temp, translationMatrix);
 
             // // Rotate to base frame
-            // Eigen::Matrix4f eRot;
-            // Eigen::Quaternionf PCRot;
-            // Eigen::Vector3f PCTrans;
-            // Eigen::Matrix<float, 4, 4> rotMatrix;
+            if(std::stod (getenv("KINECT_TILT_ANGLE"))!=0){
 
-            // // Counterclockwise rotation around y axis
-            // rotMatrix(0,0) = cos(PI);
-            // rotMatrix(0,1) = 0;
-            // rotMatrix(0,2) = sin(PI);
-            // rotMatrix(0,3) = 0;
+                double radAngle = (std::stod(getenv("KINECT_TILT_ANGLE")) * M_PI / 180);
 
-            // rotMatrix(1,0) = 0;
-            // rotMatrix(1,1) = 1;
-            // rotMatrix(1,2) = 0;
-            // rotMatrix(1,3) = 0;
+                Eigen::Matrix4f eRot;
+                Eigen::Quaternionf PCRot;
+                Eigen::Vector3f PCTrans;
+                Eigen::Matrix<float, 4, 4> rotMatrix;
 
-            // rotMatrix(2,0) = -sin(PI);
-            // rotMatrix(2,1) = 0;
-            // rotMatrix(2,2) = cos(PI);
-            // rotMatrix(2,3) = 0;    
+                // Counterclockwise rotation around y axis
+                rotMatrix(0,0) = cos(radAngle);
+                rotMatrix(0,1) = 0;
+                rotMatrix(0,2) = sin(radAngle);
+                rotMatrix(0,3) = 0;
 
-            // rotMatrix(3,0) = 0;
-            // rotMatrix(3,1) = 0;
-            // rotMatrix(3,2) = 0;
-            // rotMatrix(3,3) = 1;
+                rotMatrix(1,0) = 0;
+                rotMatrix(1,1) = 1;
+                rotMatrix(1,2) = 0;
+                rotMatrix(1,3) = 0;
 
-            
-            // pcl::transformPointCloud(*cloud, *cloud, rotMatrix);
+                rotMatrix(2,0) = -sin(radAngle);
+                rotMatrix(2,1) = 0;
+                rotMatrix(2,2) = cos(radAngle);
+                rotMatrix(2,3) = 0;    
 
+                rotMatrix(3,0) = 0;
+                rotMatrix(3,1) = 0;
+                rotMatrix(3,2) = 0;
+                rotMatrix(3,3) = 1;
 
+                
+                pcl::transformPointCloud(*cloud_temp, *cloud_temp, rotMatrix);
+
+            }
             // // Counterclockwise rotation around z axis
             // rotMatrix(0,0) = cos(-PI);
             // rotMatrix(0,1) = -sin(-PI);

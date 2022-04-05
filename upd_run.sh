@@ -12,9 +12,10 @@ export UPD_VOX_GRID_LEAF_X="0.03"
 export UPD_VOX_GRID_LEAF_Y="0.03"
 export UPD_VOX_GRID_LEAF_Z="0.03"
 export UPD_REDUCTION_PERCENT="25"
-export KINECT_TO_BASE_X="0.50"
-export KINECT_TO_BASE_Y="0.2"
-export KINECT_TO_BASE_Z="0.15"
+export KINECT_TO_BASE_X="-0.25" # 0.50 
+export KINECT_TO_BASE_Y="0.0" # 0.2
+export KINECT_TO_BASE_Z="1.4" # 0.15
+export KINECT_TILT_ANGLE="20" # Deg
 export ROS_UPD_LOOP_RATE="0.9"
   
 # Starting the upd publisher

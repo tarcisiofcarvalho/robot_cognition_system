@@ -17,6 +17,10 @@ class DiodeLaserServiceNode():
         cmd_value = data.service_command_value
         if(data.service_command_name == "pan"):
             cmd_value = int(data.service_command_value) + 80
+
+        if(data.service_command_name == "tilt"):
+            cmd_value = int(data.service_command_value) * 2.20
+
         print(cmd_value)
         command = "{name}_{value}".format(name=data.service_command_name, value=cmd_value)
         print(command)

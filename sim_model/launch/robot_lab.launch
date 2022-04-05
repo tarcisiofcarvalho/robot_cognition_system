@@ -65,7 +65,7 @@
   <!-- Gazebo PID for joints-->
   <!-- <rosparam file="$(find robot_cognition_system)/sim_model/config/gazebo_ros_control_params.yaml" command="load"/> -->
 
-  <node name="rqt_robot_steering" pkg="rqt_robot_steering" type="rqt_robot_steering">
+  <!-- <node name="rqt_robot_steering" pkg="rqt_robot_steering" type="rqt_robot_steering">
     <param name="default_topic" value="/r2d2_diff_drive_controller/cmd_vel"/>
-  </node>
+  </node> -->
 </launch>
