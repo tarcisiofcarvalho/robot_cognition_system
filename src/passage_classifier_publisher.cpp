@@ -665,6 +665,10 @@ class PassageClassificationProcess{
             searchPoint.y = targetY;
             searchPoint.z = targetZ;
 
+            double robotX = std::stod (getenv("ROBOT_BASE_X"));
+            double robotY = std::stod (getenv("ROBOT_BASE_Y"));
+            double robotZ = std::stod (getenv("ROBOT_BASE_Z"));
+
             // 4. Search the points
             while(process){
 
@@ -682,7 +686,7 @@ class PassageClassificationProcess{
                    
                     // Calculate temp distance
                     distance_temp = distance(
-                        0, 0, -0.35,
+                        robotX, robotY, robotZ,
                         PassageClassificationProcess::upd_data->points[ pointIdxNKNSearch[i]].x, 
                         PassageClassificationProcess::upd_data->points[ pointIdxNKNSearch[i]].y, 
                         PassageClassificationProcess::upd_data->points[ pointIdxNKNSearch[i]].z
@@ -736,16 +740,16 @@ class PassageClassificationProcess{
                 cout << "Distance Total: " << distance_total << endl;
 
                 PointCloud::Ptr remain (new PointCloud);
-                remain = generate_line_points(0,0,-0.35, point2.x, point2.y, point2.z);
+                remain = generate_line_points(robotX,robotY,robotZ, point2.x, point2.y, point2.z);
              
                 for( it= remain->begin(); it!= remain->end(); it++){
                   // Add to the robot path point cloud
                   point_remain.x = it->x;
                   point_remain.y = it->y;
                   point_remain.z = it->z;                      
-                  point_remain.r = 0;
+                  point_remain.r = 255;
                   point_remain.g = 0;
-                  point_remain.b = 254;
+                  point_remain.b = 0; //254
                   point_remain.a = 255;                      
                   target_path_cloud->push_back(point_remain);
                 }             
