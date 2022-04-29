@@ -645,6 +645,7 @@ class PassageClassificationProcess{
             pcl::PointXYZRGBA point2;
             pcl::PointXYZRGBA point_remain;
             pcl::PointXYZRGBA point_candidate;
+            pcl::PointXYZRGBA point_previous;
 
             point2.x = targetX;
             point2.y = targetY;
@@ -659,6 +660,7 @@ class PassageClassificationProcess{
             float distance_candidate = INFINITY;
             float distance_total = 0;
             float distance_temp = 0;
+            float distance_partial = 0;
 
             bool process = true;
             searchPoint.x = targetX;
@@ -668,6 +670,10 @@ class PassageClassificationProcess{
             double robotX = std::stod (getenv("ROBOT_BASE_X"));
             double robotY = std::stod (getenv("ROBOT_BASE_Y"));
             double robotZ = std::stod (getenv("ROBOT_BASE_Z"));
+
+            point_previous.x = -1;
+            point_previous.y = -1;
+            point_previous.z = -1;
 
             // 4. Search the points
             while(process){
@@ -705,17 +711,29 @@ class PassageClassificationProcess{
                 // Condition: The nearest point was found already, stop the processing
                 if( ( distance_candidate >= distance_previous || distance_candidate <= std::stod (getenv("POINT_CLOUD_TO_ROBOT_CENTER") )) && distance_previous > 0){
                   process = false;
-                  cout << "***** Distance Calculation ******" << endl;
-                  cout.precision(dbl::max_digits10);
-                  cout << "Distance Total: " << distance_total << endl;
+                  // cout << "***** Distance Calculation ******" << endl;
+                  // cout.precision(dbl::max_digits10);
+                  // cout << "Distance Total: " << distance_total << endl;
                 }else{
+                  // Partial distance calculation - Add the distance between the previous point and the point candidate
+                  if(point_previous.x>-1){
+                    distance_partial += distance(
+                        point_previous.x,  point_previous.y,  point_previous.z,
+                        point_candidate.x, point_candidate.y, point_candidate.z
+                    );
+                  }
+                  point_previous.x = point_candidate.x;
+                  point_previous.y = point_candidate.y;
+                  point_previous.z = point_candidate.z;
+
+                  // Calculate distance total
                   distance_total += fabs((fabs(distance_candidate) - fabs(distance_previous)));
-                  cout << "***** Distance Calculation Partial ******" << endl;
-                  cout.precision(dbl::max_digits10);
+                  // cout << "***** Distance Calculation Partial ******" << endl;
+                  // cout.precision(dbl::max_digits10);
                   // cout << "Distance Previous: " << distance_previous << endl;
                   // cout << "Distance Candidate: " << distance_candidate << endl;
                   // cout << "Difference: " << fabs((fabs(distance_candidate) - fabs(distance_previous))) << endl;
-                  cout << "Distance Total: " << distance_total << endl;
+                  // cout << "Distance Total: " << distance_total << endl;
                   distance_previous = distance_candidate;
 
                   // Add to the robot path point cloud
@@ -737,7 +755,7 @@ class PassageClassificationProcess{
               if(process == false){
 
                 //distance_total += distance_candidate;
-                cout << "Distance Total: " << distance_total << endl;
+                // cout << "Distance Total: " << distance_total << endl;
 
                 PointCloud::Ptr remain (new PointCloud);
                 remain = generate_line_points(robotX,robotY,robotZ, point2.x, point2.y, point2.z);
@@ -776,6 +794,7 @@ class PassageClassificationProcess{
 
             // 7. Publish the target distance
             cout.precision(dbl::max_digits10);
+            cout << "Distance partial finish: " << distance_partial << endl;
             cout << "Distance Total: " << distance_total << endl;
             std_msgs::Float64 msg_target_distance;
             msg_target_distance.data = distance_total;

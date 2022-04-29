@@ -3,3 +3,21 @@ Tilt:17
 Pan:0
 Calculated distance: 1.71
 Real distance: 1.70
+
+
+#Scenario 2
+Tilt:13
+Pan:0
+Calculated distance: 3.30
+Real distance: 2.55
+Ramp dist: 2.8
+
+#Scenario 2
+Tilt:15
+Pan:0
+Calculated distance: 2.31
+Real distance: 2.16
+Ramp dist: 2.8
+
+
+# shadow distance between robot and point cloud = 159

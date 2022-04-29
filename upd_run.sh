@@ -6,7 +6,7 @@ clear
 export POINT_CLOUD_API="/camera/depth/points"
 export UPD_UNEVENNESS="8"
 export UPD_UNEVENNESS_MAX="10"
-export UPD_DEG_ANGL="20"
+export UPD_DEG_ANGL="40"
 export UPD_SEARCH_RADIUS="0.3"
 export UPD_VOX_GRID_LEAF_X="0.03"
 export UPD_VOX_GRID_LEAF_Y="0.03"
