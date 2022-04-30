@@ -754,8 +754,9 @@ class PassageClassificationProcess{
               }
               if(process == false){
 
-                //distance_total += distance_candidate;
-                // cout << "Distance Total: " << distance_total << endl;
+                // distance_total += distance_candidate;
+                distance_total = distance_partial + std::stod (getenv("POINT_CLOUD_TO_ROBOT_CENTER"));;
+                cout << "Distance Total: " << distance_total << endl;
 
                 PointCloud::Ptr remain (new PointCloud);
                 remain = generate_line_points(robotX,robotY,robotZ, point2.x, point2.y, point2.z);
@@ -765,9 +766,9 @@ class PassageClassificationProcess{
                   point_remain.x = it->x;
                   point_remain.y = it->y;
                   point_remain.z = it->z;                      
-                  point_remain.r = 255;
+                  point_remain.r = 0;
                   point_remain.g = 0;
-                  point_remain.b = 0; //254
+                  point_remain.b = 254; //254
                   point_remain.a = 255;                      
                   target_path_cloud->push_back(point_remain);
                 }             

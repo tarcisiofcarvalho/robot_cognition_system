@@ -1,7 +1,7 @@
 
 Vue.component('component_target_distance', {
     props: ['target_distance', 'target_x', 'target_y'],
-    template: '<p>Target distance: {{ target_distance }} ::: Target point (X: {{ target_x }} , Y: {{ target_y }})</p>'
+    template: '<p>Target distance: {{ target_distance }} </p>'
 });
 
 
